@@ -1,5 +1,6 @@
 package main
 
+import "runtime"
 import "fmt"
 import "io/ioutil"
 import "strings"
@@ -44,11 +45,13 @@ func loadRepos(filename string) []string {
 }
 
 func unPackGoMacOSX(folderPath string) {
-    doCommand("xar",  []string{ "-xf", "go1.7.5.darwin-amd64.pkg"} )
-    doCommand("sh", []string{ "-c", "cat com.googlecode.go.pkg/Payload | gunzip -dc | cpio -i"} )
-    os.Setenv("GOROOT", fmt.Sprintf("%v/usr/local/go/", folderPath))
-    os.Setenv("PATH", fmt.Sprintf("%v/usr/local/go/bin/:%v", folderPath, os.Getenv("PATH")))
-    doCommand("go", []string{ "version"} )
+    if runtime.GOOS == "darwin" {
+        doCommand("xar",  []string{ "-xf", "go1.7.5.darwin-amd64.pkg"} )
+        doCommand("sh", []string{ "-c", "cat com.googlecode.go.pkg/Payload | gunzip -dc | cpio -i"} )
+        os.Setenv("GOROOT", fmt.Sprintf("%v/usr/local/go/", folderPath))
+        os.Setenv("PATH", fmt.Sprintf("%v/usr/local/go/bin/:%v", folderPath, os.Getenv("PATH")))
+        doCommand("go", []string{ "version"} )
+    }
 }
 
 func main() {
@@ -57,6 +60,7 @@ func main() {
     os.Mkdir(myDir, os.ModeDir | 0777)
     if err != nil { os.Exit(1) }
     os.Setenv("GOPATH", myDir)
+    fmt.Printf("Using GOPATH: %v\n", myDir)
     unPackGoMacOSX(folderPath)
 
     repos := loadRepos("libs")
