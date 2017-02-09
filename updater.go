@@ -1,5 +1,6 @@
 package main
 
+import "github.com/probandula/figlet4go"
 import "runtime"
 import "fmt"
 import "io/ioutil"
@@ -56,41 +57,126 @@ func unPackGoMacOSX(folderPath string) {
 }
 
 func buildGo () {
+    cwd, _ := os.Getwd()
     fmt.Println("I> Deleting directory golangCompiler")
-    doCommand("rm", []string{"-r", "golangCompiler"})
+    //doCommand("rm", []string{"-r", "golangCompiler"})
     doCommand("git", []string{"clone", "https://go.googlesource.com/go", "golangCompiler"})
     os.Chdir("golangCompiler/src")
     
     doCommand("git", []string{"checkout", "go1.7.5"})
     doCommand("bash", []string{"all.bash"})
+    os.Chdir(cwd)
+    os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
+    os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+}
+
+func printEnv() {
+    fmt.Println("I> GOROOT_BOOTSTRAP", os.Getenv("GOROOT_BOOTSTRAP"))
+    fmt.Println("I> GOPATH", os.Getenv("GOPATH"))
+    fmt.Println("I> PATH", os.Getenv("PATH"))
+    fmt.Println("I> GOROOT", runtime.GOROOT())
+}
+
+func figlet(s string) string {
+    ascii := figlet4go.NewAsciiRender()
+
+    // Adding the colors to RenderOptions
+    options := figlet4go.NewRenderOptions()
+    options.FontColor = []figlet4go.Color{
+        // Colors can be given by default ansi color codes...
+        figlet4go.ColorGreen,
+        figlet4go.ColorYellow,
+        figlet4go.ColorCyan,
+        // ...or by an hex string...
+        //figlet4go.NewTrueColorFromHexString("885DBA"),
+        // ...or by an TrueColor object with rgb values
+        //figlet4go.TrueColor{136, 93, 186},
+    }
+
+    renderStr, _ := ascii.RenderOpts(s, options)
+    return renderStr
+}
+
+func buildGcc(path string) {
+    targetDir := "fakeRoot"
+    os.Chdir(path)
+    fmt.Println(figlet("GMP"))
+    doCommand("git", []string{"clone", "https://github.com/bw-oss/gmp"})
+    os.Chdir("gmp")
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("make", []string{})
+    doCommand("make", []string{"install"})
+
+    os.Chdir(path)
+
+    fmt.Println(figlet("MPFR"))
+    os.Chdir("mpfr")
+    doCommand("chmod", []string{"a+rwx", "configure"})
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("make", []string{})
+    doCommand("make", []string{"install"})
+
+    os.Chdir(path)
+
+    fmt.Println(figlet("MPC"))
+    os.Chdir("mpc")
+    doCommand("chmod", []string{"a+rwx", "configure"})
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("make", []string{})
+    doCommand("make", []string{"install"})
+
+    os.Chdir(path)
+
+    fmt.Println(figlet("ELF"))
+    os.Chdir("elf")
+    doCommand("chmod", []string{"a+rwx", "configure"})
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("make", []string{})
+    doCommand("make", []string{"install"})
+ 
+    os.Chdir(path)
+    fmt.Println(figlet("GCC"))
+    os.Chdir("gcc/objdir")
+    doCommand(fmt.Sprintf("/%v/gcc/configure", path), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("make", []string{})
+    doCommand("make", []string{"install"})
+
+    os.Chdir(path)
+    os.Exit(0)
 }
 
 func main() {
+    printEnv()
     folderPath, err := osext.ExecutableFolder()
     myDir := fmt.Sprintf("%v/goFiles", folderPath)
     fmt.Println("I> Creating", myDir)
     os.Mkdir(myDir, os.ModeDir | 0777)
     if err != nil { os.Exit(1) }
     os.Setenv("GOPATH", myDir)
-    fmt.Printf("I> Using GOPATH: %v\n", myDir)
+    os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
+    printEnv()
     unPackGoMacOSX(folderPath)
-    cwd, _ := os.Getwd()
-    fmt.Println(os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT()))
-    //fmt.Println(os.Getenv("GOPATH"))
+    
     //os.Exit(0)
+    
+    buildGcc(folderPath)
+    fmt.Println(figlet("GO COMPILER"))
     buildGo()
-    os.Chdir(cwd)
+    printEnv()
 
+    fmt.Println(figlet("LIBRARIES"))
     repos := loadRepos("libs")
     for _,v := range repos {
         installGithub( v )
     }
 
+    fmt.Println(figlet("APPLICATIONS"))
     repos = loadRepos("apps")
     for _,v := range repos {
         installGithub( v )
     }
 
+    fmt.Println(figlet("DO THIS"))
     fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
     newPath := fmt.Sprintf("%v/usr/local/go/bin/", folderPath)
@@ -102,5 +188,5 @@ func main() {
 
 
 func setCommand(p string) string {
-    return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=$PATH:%v/bin/\n\n\n", p, p)
+    return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\n\n\n", p, p)
 }
