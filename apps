@@ -1,7 +1,8 @@
+github.com/ddierickx/dtop/src/eu.dominiek/dtop
+golang.org/x/tools/cmd/...
 go.googlesource.com/go
 github.com/inconshreveable/srvdir/src/srvdir/cmd
 github.com/donomii/bottom
-github.com/ddierickx/dtop
 github.com/junegunn/fzf/src/fzf/...
 github.com/polydawn/gosh
 github.com/BurntSushi/gribble
