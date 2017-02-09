@@ -9,21 +9,22 @@ import "os/exec"
 import "github.com/kardianos/osext"
 
 func doCommand(cmd string, args []string) {
+    fmt.Println("C>", cmd, args)
     out, err := exec.Command(cmd, args...).CombinedOutput()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Output: %v", string(out))
-        fmt.Fprintf(os.Stderr, "Error: %v", err)
+        fmt.Fprintf(os.Stderr, "IO> %v", string(out))
+        fmt.Fprintf(os.Stderr, "E> %v", err)
         //os.Exit(1)
     }
     if string(out) != "" {
-        fmt.Fprintf(os.Stderr, "Output: %v\n\n", string(out))
+        fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
     }
 }
 
 func buildGithub(repo string) {
     cmd := "go"
     args := []string{"build", repo}
-    fmt.Printf("Building %v\n", repo)
+    fmt.Printf("I> Building %v\n", repo)
     doCommand(cmd, args)
 }
 
@@ -31,7 +32,7 @@ func buildGithub(repo string) {
 func installGithub(repo string) {
     cmd := "go"
     args := []string{"get", "-u", repo}
-    fmt.Printf("Installing %v\n", repo)
+    fmt.Printf("I> Installing %v\n", repo)
     doCommand(cmd, args)
 }
 
@@ -54,14 +55,31 @@ func unPackGoMacOSX(folderPath string) {
     }
 }
 
+func buildGo () {
+    fmt.Println("I> Deleting directory golangCompiler")
+    doCommand("rm", []string{"-r", "golangCompiler"})
+    doCommand("git", []string{"clone", "https://go.googlesource.com/go", "golangCompiler"})
+    os.Chdir("golangCompiler/src")
+    
+    doCommand("git", []string{"checkout", "go1.7.5"})
+    doCommand("bash", []string{"all.bash"})
+}
+
 func main() {
     folderPath, err := osext.ExecutableFolder()
     myDir := fmt.Sprintf("%v/goFiles", folderPath)
+    fmt.Println("I> Creating", myDir)
     os.Mkdir(myDir, os.ModeDir | 0777)
     if err != nil { os.Exit(1) }
     os.Setenv("GOPATH", myDir)
-    fmt.Printf("Using GOPATH: %v\n", myDir)
+    fmt.Printf("I> Using GOPATH: %v\n", myDir)
     unPackGoMacOSX(folderPath)
+    cwd, _ := os.Getwd()
+    fmt.Println(os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT()))
+    //fmt.Println(os.Getenv("GOPATH"))
+    //os.Exit(0)
+    buildGo()
+    os.Chdir(cwd)
 
     repos := loadRepos("libs")
     for _,v := range repos {

@@ -1,3 +1,4 @@
+go.googlesource.com/go
 github.com/inconshreveable/srvdir/src/srvdir/cmd
 github.com/donomii/bottom
 github.com/ddierickx/dtop
