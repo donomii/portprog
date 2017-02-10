@@ -98,19 +98,27 @@ func figlet(s string) string {
 }
 
 func buildGcc(path string) {
+    arch := "x86_64"
     targetDir := "fakeRoot"
     os.Chdir(path)
     fmt.Println(figlet("GMP"))
-    doCommand("git", []string{"clone", "https://github.com/bw-oss/gmp"})
-    os.Chdir("gmp")
-    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    //doCommand("git", []string{"clone", "https://github.com/bw-oss/gmp"})
+    doCommand("tar", []string{"-xjvf", "zips/gmp-4.3.2.tar.bz2"})
+    os.Chdir("gmp-4.3.2")
+    //We need build= because the buck-toothed, cow-humping retards who use autoconf can't figure out I have the most common CPU architecture in the world
+    //So glad you wrote that stupid little script to help!
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--prefix=%v/%v", path, targetDir), fmt.Sprintf("--build=%v", arch)})
     doCommand("make", []string{})
     doCommand("make", []string{"install"})
+
+//gcc-6.3.0.tar.gz  gmp-4.3.2.tar.bz2  isl-0.15.tar.bz2  mpc-0.8.1.tar.gz  mpfr-2.4.2.tar.bz2
 
     os.Chdir(path)
 
     fmt.Println(figlet("MPFR"))
-    os.Chdir("mpfr")
+    doCommand("tar", []string{"-xjvf", "zips/mpfr-2.4.2.tar.bz2"})
+
+    os.Chdir("mpfr-2.4.2")
     doCommand("chmod", []string{"a+rwx", "configure"})
     doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
     doCommand("make", []string{})
@@ -119,7 +127,8 @@ func buildGcc(path string) {
     os.Chdir(path)
 
     fmt.Println(figlet("MPC"))
-    os.Chdir("mpc")
+    doCommand("tar", []string{"-xzvf", "zips/mpc-0.8.1.tar.gz"})
+    os.Chdir("mpc-0.8.1")
     doCommand("chmod", []string{"a+rwx", "configure"})
     doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
     doCommand("make", []string{})
@@ -127,17 +136,19 @@ func buildGcc(path string) {
 
     os.Chdir(path)
 
-    fmt.Println(figlet("ELF"))
-    os.Chdir("elf")
+ 
+    fmt.Println(figlet("ISL"))
+    doCommand("tar", []string{"-xjvf", "zips/isl-0.15.tar.bz2"})
+    os.Chdir("isl-0.15")
     doCommand("chmod", []string{"a+rwx", "configure"})
-    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--with-elf=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
     doCommand("make", []string{})
     doCommand("make", []string{"install"})
  
     os.Chdir(path)
     fmt.Println(figlet("GCC"))
     os.Chdir("gcc/objdir")
-    doCommand(fmt.Sprintf("/%v/gcc/configure", path), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+    doCommand(fmt.Sprintf("/%v/gcc/configure", path), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--with-isl=%v/%v", path, targetDir),  fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
     doCommand("make", []string{})
     doCommand("make", []string{"install"})
 
