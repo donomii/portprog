@@ -1,5 +1,6 @@
 package main
 
+import "log"
 import "github.com/probandula/figlet4go"
 import "runtime"
 import "fmt"
@@ -8,6 +9,36 @@ import "strings"
 import "os"
 import "os/exec"
 import "github.com/kardianos/osext"
+
+import (
+	"io"
+	"net/http"
+)
+
+func downloadFile(filepath string, url string) (err error) {
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Writer the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func doCommand(cmd string, args []string) {
 	fmt.Println("C>", cmd, args)
@@ -56,6 +87,7 @@ func unPackGoMacOSX(folderPath string) {
 }
 
 func buildGo() {
+	figlet("COMPILING GO")
 	cwd, _ := os.Getwd()
 	fmt.Println("I> Deleting directory golangCompiler")
 	//doCommand("rm", []string{"-r", "golangCompiler"})
@@ -63,10 +95,19 @@ func buildGo() {
 	os.Chdir("golangCompiler/src")
 
 	doCommand("git", []string{"checkout", "go1.7.5"})
-	doCommand("bash", []string{"all.bash"})
-	os.Chdir(cwd)
-	os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
-	os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		doCommand("bash", []string{"all.bash"})
+		os.Chdir(cwd)
+		os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
+		os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+	} else {
+		doCommand("all.bat", []string{})
+		os.Chdir(cwd)
+		os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
+		os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+	}
+
 }
 
 func printEnv() {
@@ -81,15 +122,17 @@ func figlet(s string) string {
 
 	// Adding the colors to RenderOptions
 	options := figlet4go.NewRenderOptions()
-	options.FontColor = []figlet4go.Color{
-		// Colors can be given by default ansi color codes...
-		figlet4go.ColorGreen,
-		figlet4go.ColorYellow,
-		figlet4go.ColorCyan,
-		// ...or by an hex string...
-		//figlet4go.NewTrueColorFromHexString("885DBA"),
-		// ...or by an TrueColor object with rgb values
-		//figlet4go.TrueColor{136, 93, 186},
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		options.FontColor = []figlet4go.Color{
+			// Colors can be given by default ansi color codes...
+			figlet4go.ColorGreen,
+			figlet4go.ColorYellow,
+			figlet4go.ColorCyan,
+			// ...or by an hex string...
+			//figlet4go.NewTrueColorFromHexString("885DBA"),
+			// ...or by an TrueColor object with rgb values
+			//figlet4go.TrueColor{136, 93, 186},
+		}
 	}
 
 	renderStr, _ := ascii.RenderOpts(s, options)
@@ -153,24 +196,58 @@ func buildGcc(path string) {
 	os.Chdir(path)
 }
 
+func unSevenZ(file string) {
+	doCommand("../7zip/7z.exe", []string{"x", file})
+}
+
 func main() {
 	printEnv()
 	folderPath, err := osext.ExecutableFolder()
 	myDir := fmt.Sprintf("%v/goFiles", folderPath)
+	zipsDir := fmt.Sprintf("%v/zips", folderPath)
+	rootDir := fmt.Sprintf("%v/fakeRoot", folderPath)
+	SzDir := fmt.Sprintf("%v7zip", folderPath)
 	fmt.Println("I> Creating", myDir)
 	os.Mkdir(myDir, os.ModeDir|0777)
+	os.Mkdir(zipsDir, os.ModeDir|0777)
+	os.Mkdir(rootDir, os.ModeDir|0777)
+	os.Mkdir(SzDir, os.ModeDir|0777)
 	if err != nil {
 		os.Exit(1)
 	}
+
+	fmt.Println(figlet("GCC COMPILER"))
+	//os.Exit(0)
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		buildGcc(folderPath)
+	} else {
+		fmt.Println(figlet("DOWNLOADING"))
+		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
+		downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
+		downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
+		doCommand("7zip/7z.exe", []string{"x", "zips/nuwen-14.1.7z"})
+		os.Chdir("components-14.1")
+		files, err := ioutil.ReadDir(".")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, file := range files {
+			if strings.HasSuffix(file.Name(), "7z") {
+				unSevenZ(file.Name())
+			}
+		}
+		os.Chdir(folderPath)
+		os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", folderPath, os.Getenv("PATH")))
+		printEnv()
+
+	}
+	fmt.Println(figlet("GO COMPILER"))
 	os.Setenv("GOPATH", myDir)
 	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 	printEnv()
 	unPackGoMacOSX(folderPath)
-
-	//os.Exit(0)
-
-	buildGcc(folderPath)
-	fmt.Println(figlet("GO COMPILER"))
 	buildGo()
 	printEnv()
 
