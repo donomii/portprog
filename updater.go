@@ -16,27 +16,27 @@ import (
 )
 
 func downloadFile(filepath string, url string) (err error) {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		// Create the file
+		out, err := os.Create(filepath)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
 
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
+		// Get the data
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		// Writer the body to file
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return err
+		}
 	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -196,22 +196,30 @@ func buildGcc(path string) {
 	os.Chdir(path)
 }
 
-func unSevenZ(file string) {
-	doCommand("../7zip/7z.exe", []string{"x", file})
+func unSevenZ(SzPath, file string) {
+	fmt.Println(SzPath, file)
+	doCommand(SzPath, []string{"x", file})
 }
 
 func main() {
 	printEnv()
+	fmt.Println(figlet(runtime.GOOS))
 	folderPath, err := osext.ExecutableFolder()
 	myDir := fmt.Sprintf("%v/goFiles", folderPath)
 	zipsDir := fmt.Sprintf("%v/zips", folderPath)
 	rootDir := fmt.Sprintf("%v/fakeRoot", folderPath)
-	SzDir := fmt.Sprintf("%v7zip", folderPath)
+	srcDir := fmt.Sprintf("%v/src", folderPath)
+	SzDir := fmt.Sprintf("%v/7zip", folderPath)
+	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
+	goDir := fmt.Sprintf("%v/golangCompiler", folderPath)
 	fmt.Println("I> Creating", myDir)
 	os.Mkdir(myDir, os.ModeDir|0777)
 	os.Mkdir(zipsDir, os.ModeDir|0777)
 	os.Mkdir(rootDir, os.ModeDir|0777)
 	os.Mkdir(SzDir, os.ModeDir|0777)
+	os.Mkdir(srcDir, os.ModeDir|0777)
+	fmt.Println("Creating ", goDir)
+	os.Mkdir(goDir, os.ModeDir|0777)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -235,7 +243,7 @@ func main() {
 
 		for _, file := range files {
 			if strings.HasSuffix(file.Name(), "7z") {
-				unSevenZ(file.Name())
+				unSevenZ(SzPath, file.Name())
 			}
 		}
 		os.Chdir(folderPath)
@@ -243,12 +251,32 @@ func main() {
 		printEnv()
 
 	}
+
+	os.Chdir(folderPath)
+	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
+	os.Chdir(srcDir)
+	unSevenZ(SzPath, "../zips/zeromq-4.2.1.zip")
+	os.Chdir("zeromq-4.2.1/zeromq-4.2.1/builds/mingw32")
+	doCommand("make", []string{})
+	os.Chdir(folderPath)
+
 	fmt.Println(figlet("GO COMPILER"))
+	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
+	os.Mkdir(goDir, os.ModeDir|0777)
+
 	os.Setenv("GOPATH", myDir)
 	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 	printEnv()
-	unPackGoMacOSX(folderPath)
-	buildGo()
+	if runtime.GOOS == "darwin" {
+		unPackGoMacOSX(folderPath)
+	} else if runtime.GOOS == "windows" {
+		os.Chdir(goDir)
+		unSevenZ(SzPath, "../zips/go1.7.5.windows-amd64.zip")
+		os.Chdir(folderPath)
+	} else {
+		os.Setenv("GOROOT", goDir)
+		buildGo()
+	}
 	printEnv()
 
 	fmt.Println(figlet("LIBRARIES"))
