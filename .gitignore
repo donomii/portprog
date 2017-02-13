@@ -1,1 +1,8 @@
 golangMegaPack.exe
+7zip
+src
+components*
+*.exe
+zips
+golangCompiler
+goFiles
