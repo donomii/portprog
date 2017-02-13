@@ -139,40 +139,64 @@ func figlet(s string) string {
 	return renderStr
 }
 
+func makeWith(optName, srcDir, libName string) string {
+	return fmt.Sprintf("--with-%v=%v/%v", optName, srcDir, libName)
+}
+
+func makeOpt(optName, optVal string) string {
+	return fmt.Sprintf("--%v=%v", optName, optVal)
+}
+
+func unTgzLib(lib string) {
+	doCommand("tar", []string{"-xzvf", fmt.Sprintf("zips/%v.tar.gz", lib)})
+}
+
+func unBzLib(lib string) {
+	doCommand("tar", []string{"-xjvf", fmt.Sprintf("zips/%v.tar.bz2", lib)})
+}
+
 func buildGcc(path string) {
 	arch := "x86_64"
-	targetDir := "fakeRoot"
+	targetDir := fmt.Sprintf("%v/fakeRoot", path)
+	//srcDir := fmt.Sprintf("%v/src", path)
 	os.Chdir(path)
 	fmt.Println(figlet("GMP"))
 	//doCommand("git", []string{"clone", "https://github.com/bw-oss/gmp"})
-	doCommand("tar", []string{"-xjvf", "zips/gmp-4.3.2.tar.bz2"})
-	os.Chdir("gmp-4.3.2")
+	gmpName := "gmp-6.1.2"
+	mpfrName := "mpfr-3.1.5"
+	mpcName := "mpc-1.0.3"
+	gccName := "gcc-6.3.0"
+
+	unBzLib(gmpName)
+	os.Chdir(gmpName)
 	//We need build= because the buck-toothed, cow-humping retards who use autoconf can't figure out I have the most common CPU architecture in the world
 	//So glad you wrote that stupid little script to help!
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--prefix=%v/%v", path, targetDir), fmt.Sprintf("--build=%v", arch)})
+	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("prefix", targetDir), makeOpt("build", arch)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
 
-	//gcc-6.3.0.tar.gz  gmp-4.3.2.tar.bz2  isl-0.15.tar.bz2  mpc-0.8.1.tar.gz  mpfr-2.4.2.tar.bz2
+	//gcc-6.3.0.tar.gz  gmp-6.1.2.tar.bz2  isl-0.15.tar.bz2  mpc-0.8.1.tar.gz  mpfr-2.4.2.tar.bz2
 
 	os.Chdir(path)
 
 	fmt.Println(figlet("MPFR"))
-	doCommand("tar", []string{"-xjvf", "zips/mpfr-2.4.2.tar.bz2"})
+	//doCommand("tar", []string{"-xjvf", "zips/mpfr-2.4.2.tar.bz2"})
+	doCommand("tar", []string{"-xjvf", fmt.Sprintf("zips/%v.tar.bz2", mpfrName)})
 
-	os.Chdir("mpfr-2.4.2")
+	os.Chdir(mpfrName)
 	doCommand("chmod", []string{"a+rwx", "configure"})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+	//doCommand("./configure", []string{"--disable-shared", "--enable-static", makeWith("gmp", srcDir, "gmp-6.1.2"), makeWith("gmp", srcDir, "gmp-6.1.2"), makeOpt("prefix", targetDir)})
+	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeOpt("prefix", targetDir)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
 
 	os.Chdir(path)
 
 	fmt.Println(figlet("MPC"))
-	doCommand("tar", []string{"-xzvf", "zips/mpc-0.8.1.tar.gz"})
-	os.Chdir("mpc-0.8.1")
+	unTgzLib(mpcName)
+	os.Chdir(mpcName)
 	doCommand("chmod", []string{"a+rwx", "configure"})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp", targetDir), makeOpt("with-mpfr", targetDir), makeOpt("prefix", targetDir)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
 
@@ -182,18 +206,21 @@ func buildGcc(path string) {
 	doCommand("tar", []string{"-xjvf", "zips/isl-0.15.tar.bz2"})
 	os.Chdir("isl-0.15")
 	doCommand("chmod", []string{"a+rwx", "configure"})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--with-elf=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp-prefix", targetDir), makeOpt("prefix", targetDir)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
 
 	os.Chdir(path)
 	fmt.Println(figlet("GCC"))
+	unTgzLib(gccName)
+	os.Chdir(gccName)
 	os.Chdir("gcc/objdir")
-	doCommand(fmt.Sprintf("/%v/gcc/configure", path), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", fmt.Sprintf("--with-gmp=%v/%v", path, targetDir), fmt.Sprintf("--with-mpfr=%v/%v", path, targetDir), fmt.Sprintf("--with-mpc=%v/%v", path, targetDir), fmt.Sprintf("--with-isl=%v/%v", path, targetDir), fmt.Sprintf("--prefix=%v/%v", path, targetDir)})
+	doCommand(fmt.Sprintf("%v/%v/configure", path, gccName), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
 
 	os.Chdir(path)
+	os.Exit(0)
 }
 
 func unSevenZ(SzPath, file string) {
@@ -228,6 +255,7 @@ func main() {
 	//os.Exit(0)
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		buildGcc(folderPath)
+		downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	} else {
 		fmt.Println(figlet("DOWNLOADING"))
 		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
