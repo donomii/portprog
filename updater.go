@@ -211,13 +211,14 @@ func unzipWithPathMake(zipName) {
 
 func fetchBuild(targetDir, name, zip, url, plan string) {
     downloadFile(fmt.Sprintf("zips/%v", zip), url)
-    standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir)})
+    standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir) })
 }
 
 
 func main() {
 	printEnv()
 	fmt.Println(figlet(runtime.GOOS))
+    os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {
 		os.Exit(1)
@@ -239,9 +240,9 @@ func main() {
 	os.Mkdir(goDir, os.ModeDir|0777)
 
 	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
+    fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure")
     fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure")
     fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure")
-    os.Exit(0)
 
 	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
 	fmt.Println(figlet("GCC COMPILER"))
@@ -273,6 +274,7 @@ func main() {
 
 	}
 
+    os.Exit(0)
 
 	fmt.Println(figlet("GO COMPILER"))
 	os.Mkdir(goDir, os.ModeDir|0777)
