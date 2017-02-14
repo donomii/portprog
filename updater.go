@@ -155,6 +155,22 @@ func unBzLib(lib string) {
 	doCommand("tar", []string{"-xjvf", fmt.Sprintf("zips/%v.tar.bz2", lib)})
 }
 
+func standardConfigureBuild(name, buildDir string, args []string) {
+	fmt.Println(figlet(name))
+	cwd, _ := os.Getwd()
+    configurePath := fmt.Sprintf("%v/%v/%v", cwd, name, "configure")
+	unBzLib(name)
+	unTgzLib(name)
+	os.Chdir(name)
+	os.Chdir(buildDir)
+	doCommand("chmod", []string{"a+rwx", "configure"})
+	doCommand(configurePath, args)
+	doCommand("make", []string{})
+	doCommand("make", []string{"install"})
+	os.Chdir(cwd)
+	doCommand("rm", []string{"-r", name})
+}
+
 func buildGcc(path string) {
 	arch := "x86_64"
 	targetDir := fmt.Sprintf("%v/fakeRoot", path)
@@ -166,63 +182,13 @@ func buildGcc(path string) {
 	mpfrName := "mpfr-3.1.5"
 	mpcName := "mpc-1.0.3"
 	gccName := "gcc-6.3.0"
+    islName := "isl-0.15"
 
-	unBzLib(gmpName)
-	os.Chdir(gmpName)
-	//We need build= because the buck-toothed, cow-humping retards who use autoconf can't figure out I have the most common CPU architecture in the world
-	//So glad you wrote that stupid little script to help!
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("prefix", targetDir), makeOpt("build", arch)})
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-
-	//gcc-6.3.0.tar.gz  gmp-6.1.2.tar.bz2  isl-0.15.tar.bz2  mpc-0.8.1.tar.gz  mpfr-2.4.2.tar.bz2
-
-	os.Chdir(path)
-
-	fmt.Println(figlet("MPFR"))
-	//doCommand("tar", []string{"-xjvf", "zips/mpfr-2.4.2.tar.bz2"})
-	doCommand("tar", []string{"-xjvf", fmt.Sprintf("zips/%v.tar.bz2", mpfrName)})
-
-	os.Chdir(mpfrName)
-	doCommand("chmod", []string{"a+rwx", "configure"})
-	//doCommand("./configure", []string{"--disable-shared", "--enable-static", makeWith("gmp", srcDir, "gmp-6.1.2"), makeWith("gmp", srcDir, "gmp-6.1.2"), makeOpt("prefix", targetDir)})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeOpt("prefix", targetDir)})
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-
-	os.Chdir(path)
-
-	fmt.Println(figlet("MPC"))
-	unTgzLib(mpcName)
-	os.Chdir(mpcName)
-	doCommand("chmod", []string{"a+rwx", "configure"})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp", targetDir), makeOpt("with-mpfr", targetDir), makeOpt("prefix", targetDir)})
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-	doCommand("rm", []string{"-r", mpcName})
-
-	os.Chdir(path)
-
-	fmt.Println(figlet("ISL"))
-	doCommand("tar", []string{"-xjvf", "zips/isl-0.15.tar.bz2"})
-	os.Chdir("isl-0.15")
-	doCommand("chmod", []string{"a+rwx", "configure"})
-	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp-prefix", targetDir), makeOpt("prefix", targetDir)})
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-
-	os.Chdir(path)
-	fmt.Println(figlet("GCC"))
-	unTgzLib(gccName)
-	os.Chdir(gccName)
-	os.Chdir("gcc/objdir")
-	doCommand(fmt.Sprintf("%v/%v/configure", path, gccName), []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-
-	os.Chdir(path)
-	doCommand("rm", []string{"-r", gccName})
-    
+	standardConfigureBuild(gmpName, ".", []string{"--disable-shared", "--enable-static", makeOpt("prefix", targetDir), makeOpt("build", arch)})
+	standardConfigureBuild(mpfrName, ".", []string{"--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeOpt("prefix", targetDir)})
+	standardConfigureBuild(mpcName, ".", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp", targetDir), makeOpt("with-mpfr", targetDir), makeOpt("prefix", targetDir)})
+	standardConfigureBuild(islName, ".", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp-prefix", targetDir), makeOpt("prefix", targetDir)})
+	standardConfigureBuild(gccName, "gcc/objdir", []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
 }
 
 func unSevenZ(SzPath, file string) {
@@ -230,10 +196,32 @@ func unSevenZ(SzPath, file string) {
 	doCommand(SzPath, []string{"x", file})
 }
 
+
+/*
+func unzipWithPathMake(zipName) {
+	fmt.Println(figlet(zipName))
+	cwd, _ := os.Getwd()
+	os.Chdir(srcDir)
+	unSevenZ(SzPath, "../zips/zeromq-4.2.1.zip")
+	os.Chdir("zeromq-4.2.1/zeromq-4.2.1/builds/mingw32")
+	doCommand("make", []string{})
+	os.Chdir(zipName)
+}
+*/
+
+func fetchBuild(targetDir, name, zip, url, plan string) {
+    downloadFile(fmt.Sprintf("zips/%v", zip), url)
+    standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir)})
+}
+
+
 func main() {
 	printEnv()
 	fmt.Println(figlet(runtime.GOOS))
 	folderPath, err := osext.ExecutableFolder()
+	if err != nil {
+		os.Exit(1)
+	}
 	myDir := fmt.Sprintf("%v/goFiles", folderPath)
 	zipsDir := fmt.Sprintf("%v/zips", folderPath)
 	rootDir := fmt.Sprintf("%v/fakeRoot", folderPath)
@@ -249,10 +237,13 @@ func main() {
 	os.Mkdir(srcDir, os.ModeDir|0777)
 	fmt.Println("Creating ", goDir)
 	os.Mkdir(goDir, os.ModeDir|0777)
-	if err != nil {
-		os.Exit(1)
-	}
 
+	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
+    fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure")
+    fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure")
+    os.Exit(0)
+
+	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
 	fmt.Println(figlet("GCC COMPILER"))
 	//os.Exit(0)
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
@@ -282,16 +273,8 @@ func main() {
 
 	}
 
-	os.Chdir(folderPath)
-	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
-	os.Chdir(srcDir)
-	unSevenZ(SzPath, "../zips/zeromq-4.2.1.zip")
-	os.Chdir("zeromq-4.2.1/zeromq-4.2.1/builds/mingw32")
-	doCommand("make", []string{})
-	os.Chdir(folderPath)
 
 	fmt.Println(figlet("GO COMPILER"))
-	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
 	os.Mkdir(goDir, os.ModeDir|0777)
 
 	os.Setenv("GOPATH", myDir)
