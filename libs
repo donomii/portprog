@@ -19,7 +19,7 @@ github.com/ugorji/go
 github.com/weaveworks/procspy
 github.com/mitchellh/go-ps
 github.com/jroimartin/gocui
-https://github.com/nsf/termbox-go
+github.com/nsf/termbox-go
 github.com/apcera/termtables
 github.com/gizak/termui
-https://github.com/gosuri/uitable
+github.com/gosuri/uitable

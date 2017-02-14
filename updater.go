@@ -104,8 +104,8 @@ func buildGo() {
 	} else {
 		doCommand("all.bat", []string{})
 		os.Chdir(cwd)
-		os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
-		os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+		os.Setenv("GOROOT", fmt.Sprintf("%v\\golangCompiler\\", cwd))
+		os.Setenv("PATH", fmt.Sprintf("%v\\golangCompiler\\bin\\:%v", cwd, os.Getenv("PATH")))
 	}
 
 }
@@ -220,7 +220,6 @@ func buildGcc(path string) {
 	doCommand("make", []string{"install"})
 
 	os.Chdir(path)
-	os.Exit(0)
 }
 
 func unSevenZ(SzPath, file string) {
