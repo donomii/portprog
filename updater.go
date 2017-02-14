@@ -199,6 +199,7 @@ func buildGcc(path string) {
 	doCommand("./configure", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp", targetDir), makeOpt("with-mpfr", targetDir), makeOpt("prefix", targetDir)})
 	doCommand("make", []string{})
 	doCommand("make", []string{"install"})
+	doCommand("rm", []string{"-r", mpcName})
 
 	os.Chdir(path)
 
@@ -220,6 +221,8 @@ func buildGcc(path string) {
 	doCommand("make", []string{"install"})
 
 	os.Chdir(path)
+	doCommand("rm", []string{"-r", gccName})
+    
 }
 
 func unSevenZ(SzPath, file string) {
@@ -253,8 +256,8 @@ func main() {
 	fmt.Println(figlet("GCC COMPILER"))
 	//os.Exit(0)
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		buildGcc(folderPath)
 		downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
+		buildGcc(folderPath)
 	} else {
 		fmt.Println(figlet("DOWNLOADING"))
 		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
