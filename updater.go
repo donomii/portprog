@@ -77,35 +77,34 @@ func loadRepos(filename string) []string {
 }
 
 func unPackGoMacOSX(folderPath string) {
-	if runtime.GOOS == "darwin" {
-		doCommand("xar", []string{"-xf", "go1.7.5.darwin-amd64.pkg"})
-		doCommand("sh", []string{"-c", "cat com.googlecode.go.pkg/Payload | gunzip -dc | cpio -i"})
-		os.Setenv("GOROOT", fmt.Sprintf("%v/usr/local/go/", folderPath))
-		os.Setenv("PATH", fmt.Sprintf("%v/usr/local/go/bin/:%v", folderPath, os.Getenv("PATH")))
+		//doCommand("xar", []string{"-xf", "go1.7.5.darwin-amd64.tar.gz"})
+		//doCommand("sh", []string{"-c", "cat com.googlecode.go.pkg/Payload | gunzip -dc | cpio -i"})
+        unTgzLib("go1.7.5.darwin-amd64")
+		os.Setenv("GOROOT", fmt.Sprintf("%v/go/", folderPath))
+		os.Setenv("PATH", fmt.Sprintf("%v/go/bin/:%v", folderPath, os.Getenv("PATH")))
 		doCommand("go", []string{"version"})
-	}
 }
 
-func buildGo() {
+func buildGo(goDir string) {
 	figlet("COMPILING GO")
 	cwd, _ := os.Getwd()
-	fmt.Println("I> Deleting directory golangCompiler")
-	//doCommand("rm", []string{"-r", "golangCompiler"})
-	doCommand("git", []string{"clone", "https://go.googlesource.com/go", "golangCompiler"})
-	os.Chdir("golangCompiler/src")
+	fmt.Println(fmt.Sprintf("I> Deleting directory %v", goDir))
+	//doCommand("rm", []string{"-r", goDir})
+	doCommand("git", []string{"clone", "https://go.googlesource.com/go", goDir})
+	os.Chdir(fmt.Sprintf("%v/src", goDir))
 
 	doCommand("git", []string{"checkout", "go1.7.5"})
 
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		doCommand("bash", []string{"all.bash"})
 		os.Chdir(cwd)
-		os.Setenv("GOROOT", fmt.Sprintf("%v/golangCompiler/", cwd))
-		os.Setenv("PATH", fmt.Sprintf("%v/golangCompiler/bin/:%v", cwd, os.Getenv("PATH")))
+		os.Setenv("GOROOT", fmt.Sprintf("%v/%v/",goDir,  cwd))
+		os.Setenv("PATH", fmt.Sprintf("%v/%v/bin/:%v", cwd, goDir, os.Getenv("PATH")))
 	} else {
 		doCommand("all.bat", []string{})
 		os.Chdir(cwd)
-		os.Setenv("GOROOT", fmt.Sprintf("%v\\golangCompiler\\", cwd))
-		os.Setenv("PATH", fmt.Sprintf("%v\\golangCompiler\\bin\\:%v", cwd, os.Getenv("PATH")))
+		os.Setenv("GOROOT", fmt.Sprintf("%v\\%v\\", goDir, cwd))
+		os.Setenv("PATH", fmt.Sprintf("%v\\%v\\bin\\:%v", cwd, goDir, os.Getenv("PATH")))
 	}
 
 }
@@ -209,15 +208,39 @@ func unzipWithPathMake(zipName) {
 }
 */
 
-func fetchBuild(targetDir, name, zip, url, plan string) {
-    downloadFile(fmt.Sprintf("zips/%v", zip), url)
-    standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir) })
+func goGetAndMake(targetDir, name, goPath, url, p1 string) {
+    //p1 is the branch name
+	fmt.Println(figlet(name))
+	cwd, _ := os.Getwd()
+	doCommand("go", []string{"get", "-u", url})
+	os.Chdir(goPath)
+	os.Chdir("src")
+	os.Chdir(url)
+	doCommand("git", []string{"checkout", p1})
+    thsDir, _ := os.Getwd()
+    fmt.Printf("Making in %v\n", thsDir)
+	doCommand("make", []string{"install"})
+	os.Chdir(cwd)
 }
 
+func fetchBuild(targetDir, name, zip, url, plan, p1 string) {
+    downloadFile(fmt.Sprintf("zips/%v", zip), url)
+    if plan == "standardConfigure" {
+        standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir) })
+    } else if plan == "goGetAndMake" {
+        goGetAndMake(targetDir, name, zip, url, p1) //use zip field as goPath
+    }
+}
+
+func figSay(s string) {
+    fmt.Println(figlet(s))
+}
 
 func main() {
 	printEnv()
-	fmt.Println(figlet(runtime.GOOS))
+    installGcc := false
+    installGo := false
+	figSay(runtime.GOOS)
     os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {
@@ -229,7 +252,7 @@ func main() {
 	srcDir := fmt.Sprintf("%v/src", folderPath)
 	SzDir := fmt.Sprintf("%v/7zip", folderPath)
 	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
-	goDir := fmt.Sprintf("%v/golangCompiler", folderPath)
+	goDir := fmt.Sprintf("%v/go", folderPath)
 	fmt.Println("I> Creating", myDir)
 	os.Mkdir(myDir, os.ModeDir|0777)
 	os.Mkdir(zipsDir, os.ModeDir|0777)
@@ -238,23 +261,28 @@ func main() {
 	os.Mkdir(srcDir, os.ModeDir|0777)
 	fmt.Println("Creating ", goDir)
 	os.Mkdir(goDir, os.ModeDir|0777)
+	os.Setenv("GOPATH", myDir)
+	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 
 	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
-    fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure")
-    fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure")
-    fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure")
+    //fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
+    //fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure", "")
+    //fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure", "")
+    fetchBuild(rootDir, "cockroach", myDir, "github.com/cockroachdb/cockroach", "goGetAndMake", "beta-20170209")
 
-	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
-	fmt.Println(figlet("GCC COMPILER"))
-	//os.Exit(0)
-	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
-		buildGcc(folderPath)
-	} else {
-		fmt.Println(figlet("DOWNLOADING"))
 		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
 		downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
 		downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
+	downloadFile("zips/go1.7.5.darwin-amd64.tar.gz", "https://storage.googleapis.com/golang/go1.7.5.darwin-amd64.tar.gz")
+	fmt.Println(figlet("GCC COMPILER"))
+	//os.Exit(0)
+        if installGcc {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
+            buildGcc(folderPath)
+	} else {
+		fmt.Println(figlet("DOWNLOADING"))
 		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
 		doCommand("7zip/7z.exe", []string{"x", "zips/nuwen-14.1.7z"})
 		os.Chdir("components-14.1")
@@ -269,38 +297,41 @@ func main() {
 			}
 		}
 		os.Chdir(folderPath)
-		os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", folderPath, os.Getenv("PATH")))
 		printEnv()
 
 	}
+        }
+		os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", folderPath, os.Getenv("PATH")))
 
-    os.Exit(0)
 
+    if installGo {
 	fmt.Println(figlet("GO COMPILER"))
 	os.Mkdir(goDir, os.ModeDir|0777)
 
-	os.Setenv("GOPATH", myDir)
-	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 	printEnv()
 	if runtime.GOOS == "darwin" {
+        figSay("Unpacking Golang")
 		unPackGoMacOSX(folderPath)
 	} else if runtime.GOOS == "windows" {
 		os.Chdir(goDir)
+        figSay("Unpacking Golang")
 		unSevenZ(SzPath, "../zips/go1.7.5.windows-amd64.zip")
 		os.Chdir(folderPath)
 	} else {
 		os.Setenv("GOROOT", goDir)
-		buildGo()
+        figSay("Building Golang")
+		buildGo(goDir)
 	}
 	printEnv()
+    }
 
-	fmt.Println(figlet("LIBRARIES"))
+	figSay("LIBRARIES")
 	repos := loadRepos("libs")
 	for _, v := range repos {
 		installGithub(v)
 	}
 
-	fmt.Println(figlet("APPLICATIONS"))
+	figSay("APPLICATIONS")
 	repos = loadRepos("apps")
 	for _, v := range repos {
 		installGithub(v)
