@@ -1,7 +1,9 @@
+github.com/gopherjs/gopherjs
+github.com/derekparker/delve
 github.com/ddierickx/dtop/src/eu.dominiek/dtop
 golang.org/x/tools/cmd/...
 go.googlesource.com/go
-github.com/inconshreveable/srvdir/src/srvdir/cmd
+github.com/inconshreveable/srvdir/src/srvdir/cmd...
 github.com/donomii/bottom
 github.com/google/subcommands
 github.com/ddierickx/dtop
@@ -17,12 +19,10 @@ github.com/mholt/caddy/caddy
 github.com/joewalnes/websocketd
 github.com/yudai/gotty
 github.com/cyfdecyf/cow
-github.com/camlistore/camlistore
 github.com/motemen/gore
 github.com/sourcegraph/thyme
 github.com/mehrdadrad/mylg
 github.com/google/codesearch/cmd/...
-github.com/EtienneBruines/UberGallery-go
 github.com/DoZator/simple_gallery
 github.com/fogleman/primitive
 github.com/hoisie/mustache
@@ -86,8 +86,7 @@ github.com/noraesae/orange-cat
 github.com/xyproto/algernon
 github.com/cortesi/devd/cmd/devd
 github.com/coreos/etcd
-github.com/nsqio/nsq
-github.com/junegunn/fzf
+github.com/nsqio/nsq/apps/...
 github.com/armon/go-radix
 github.com/jteeuwen/go-bindata
 github.com/thewhitetulip/Tasks

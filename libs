@@ -3,7 +3,6 @@ github.com/tcolgate/mp3
 github.com/fogleman/fauxgl
 github.com/PuerkitoBio/goquery
 github.com/willf/bitset
-github.com/sergi/go-diff
 github.com/klauspost/pgzip
 github.com/secondbit/wendy
 github.com/willf/bloom
@@ -23,3 +22,11 @@ github.com/nsf/termbox-go
 github.com/apcera/termtables
 github.com/gizak/termui
 github.com/gosuri/uitable
+https://github.com/go-music-theory/music-theory
+https://github.com/gordonklaus/portaudio
+https://github.com/mccoyst/vorbis
+https://github.com/mdlayher/waveform
+https://github.com/peterh/liner
+https://github.com/alecthomas/kingpin
+https://github.com/docopt/docopt.go
+https://github.com/spf13/cobra
