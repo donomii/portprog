@@ -1,0 +1,6 @@
+{
+    "Name"  :   "libelf-0.8.13",
+    "Zip"   :   "libelf-0.8.13.tar.gz",
+    "Url"   :   "http://www.mr511.de/software/libelf-0.8.13.tar.gz",
+    "Plan"  :   "standardConfigure"
+}
