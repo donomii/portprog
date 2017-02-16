@@ -315,16 +315,12 @@ func main() {
 
     processDir(b, "packages")
 
-	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
     //fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
-    //fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure", "")
-    //fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure", "")
-    //fetchBuild(rootDir, "cockroach", myDir, "github.com/cockroachdb/cockroach", "goGetAndMake", "beta-20170209")
     //fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
     //fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
-    //fetchBuild(rootDir, "SDL2-2.0.5", "SDL2-2.0.5.tar.gz", "https://www.libsdl.org/release/SDL2-2.0.5.tar.gz", "standardConfigure", "")
 
 		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
+		downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
 		downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
 		downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
 	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
