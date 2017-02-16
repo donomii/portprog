@@ -1,0 +1,6 @@
+{
+    "Name"  :   "SDL2-2.0.5",
+    "Zip"   :   "SDL2-2.0.5.tar.gz",
+    "Url"   :   "https://www.libsdl.org/release/SDL2-2.0.5.tar.gz",
+    "Plan"  :   "standardConfigure"
+}

@@ -1,0 +1,6 @@
+{
+    "Name"  :   "cmake-3.7.2",
+    "Zip"   :   "cmake-3.7.2.tar.gz",
+    "Url"   :   "https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz",
+    "Plan"  :   "standardConfigure"
+}

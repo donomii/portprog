@@ -1,5 +1,6 @@
 package main
 
+
 import "log"
 import "github.com/probandula/figlet4go"
 import "runtime"
@@ -208,6 +209,21 @@ func unzipWithPathMake(zipName) {
 }
 */
 
+func gitAndMake(targetDir, name, srcPath, url, p1 string) {
+    //p1 is the branch name
+	fmt.Println(figlet(name))
+	cwd, _ := os.Getwd()
+	os.Chdir(srcPath)
+	doCommand("git", []string{"clone", url, name})
+	os.Chdir(name)
+	doCommand("git", []string{"checkout", p1})
+    thsDir, _ := os.Getwd()
+    fmt.Printf("Making in %v\n", thsDir)
+	doCommand("make", []string{"install"})
+	os.Chdir(cwd)
+}
+
+
 func goGetAndMake(targetDir, name, goPath, url, p1 string) {
     //p1 is the branch name
 	fmt.Println(figlet(name))
@@ -229,11 +245,39 @@ func fetchBuild(targetDir, name, zip, url, plan, p1 string) {
         standardConfigureBuild(name, ".", []string{makeOpt("prefix", targetDir), makeOpt("with-sysroot", targetDir) })
     } else if plan == "goGetAndMake" {
         goGetAndMake(targetDir, name, zip, url, p1) //use zip field as goPath
+    } else if plan == "gitAndMake" {
+        gitAndMake(targetDir, name, zip, url, p1) //use zip field as srcDir (i.e. buildDir)
+    }
+}
+
+func doAll(p Package, b Config) {
+    figSay(p.Name)
+    downloadFile(fmt.Sprintf("zips/%v", p.Zip), p.Url)
+    plan := p.Plan
+    targetDir := b.InstallDir
+    if plan == "standardConfigure" {
+        standardConfigureBuild(p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir) })
+    } else if plan == "goGetAndMake" {
+        goGetAndMake(targetDir, p.Name, b.InstallDir, p.Url, p.Branch) //use zip field as goPath
+    } else if plan == "gitAndMake" {
+        gitAndMake(targetDir, p.Name, p.Zip, p.Url, p.Branch) //use zip field as srcDir (i.e. buildDir)
     }
 }
 
 func figSay(s string) {
     fmt.Println(figlet(s))
+}
+
+func processDir(b Config, d string) {
+    files, err := ioutil.ReadDir(d)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for _, file := range files {
+        p := LoadJSON(fmt.Sprintf("%v/%v",d, file.Name()))
+        doAll(p,b)
+    }
 }
 
 func main() {
@@ -264,11 +308,21 @@ func main() {
 	os.Setenv("GOPATH", myDir)
 	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 
+    var b Config
+    b.InstallDir = rootDir
+    b.GoPath = myDir
+    b.SourceDir = srcDir
+
+    processDir(b, "packages")
+
 	downloadFile("zips/zeromq-4.2.1.zip", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.zip")
     //fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
     //fetchBuild(rootDir, "libunwind-1.2", "libunwind-1.2.tar.gz", "http://download.savannah.gnu.org/releases/libunwind/libunwind-1.2.tar.gz", "standardConfigure", "")
     //fetchBuild(rootDir, "zeromq-4.2.1", "zeromq-4.2.1.tar.gz", "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz", "standardConfigure", "")
-    fetchBuild(rootDir, "cockroach", myDir, "github.com/cockroachdb/cockroach", "goGetAndMake", "beta-20170209")
+    //fetchBuild(rootDir, "cockroach", myDir, "github.com/cockroachdb/cockroach", "goGetAndMake", "beta-20170209")
+    //fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
+    //fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
+    //fetchBuild(rootDir, "SDL2-2.0.5", "SDL2-2.0.5.tar.gz", "https://www.libsdl.org/release/SDL2-2.0.5.tar.gz", "standardConfigure", "")
 
 		downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
 		downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
