@@ -6,3 +6,4 @@ components*
 zips
 golangCompiler
 goFiles
+*.dll
