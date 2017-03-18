@@ -1,9 +1,0 @@
-{
-    "Name"  :   "make-4.2",
-    "Zip"   :   "make-4.2.tar.gz",
-    "Url"   :   "http://ftp.gnu.org/gnu/make/make-4.2.tar.gz",
-	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory",
-	"Type"  :   "CustomCommand",
-	"Command": "build_w32.bat gcc"
-}

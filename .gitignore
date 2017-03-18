@@ -7,4 +7,3 @@ zips
 golangCompiler
 goFiles
 *.dll
-fakeRoot

@@ -72,13 +72,8 @@ func loadRepos(filename string) []string {
 	if err != nil {
 		//Do something
 	}
-	lines1 := strings.Split(string(content), "\r\n")
-	lines2 := strings.Split(string(content), "\n")
-	if len(lines1) > len(lines2) {
-		return lines1
-	} else {
-		return lines2
-	}
+	lines := strings.Split(string(content), "\n")
+	return lines
 }
 
 func unPackGoMacOSX(b Config, folderPath string) {
@@ -307,8 +302,6 @@ func doAll(p Package, b Config) {
 		zipWithNoDirectory(b, p)
 	} else if plan == "zipWithDirectory" {
 		zipWithDirectory(b, p)
-	} else if plan == "customCommand" {
-		customCommand(b, p)
 	}
 }
 
@@ -335,7 +328,7 @@ func isWindows() bool {
 
 func main() {
 	printEnv()
-	installGcc := true
+	installGcc := false
 	installGo := false
 	figSay(runtime.GOOS)
 	os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
@@ -367,8 +360,6 @@ func main() {
 	b.SourceDir = srcDir
 	b.SzPath = SzPath
 	b.ZipDir = zipsDir
-	b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
-	os.Mkdir(b.SiloDir, os.ModeDir|0777)
 
 	processDir(b, "packages-windows")
 	//processDir(b, "packages")
@@ -431,19 +422,18 @@ func main() {
 		}
 		printEnv()
 	}
-	/*
-		figSay("LIBRARIES")
-		repos := loadRepos("libs")
-		for _, v := range repos {
-			installGithub(v)
-		}
 
-		figSay("APPLICATIONS")
-		repos = loadRepos("apps")
-		for _, v := range repos {
-			installGithub(v)
-		}
-	*/
+	figSay("LIBRARIES")
+	repos := loadRepos("libs")
+	for _, v := range repos {
+		installGithub(v)
+	}
+
+	figSay("APPLICATIONS")
+	repos = loadRepos("apps")
+	for _, v := range repos {
+		installGithub(v)
+	}
 
 	fmt.Println(figlet("DO THIS"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
@@ -456,5 +446,5 @@ func main() {
 }
 
 func setCommand(p string) string {
-	return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\nset PATH=%v;\n\n\n", p, p, p)
+	return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\n\n\n", p, p)
 }

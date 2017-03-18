@@ -1,7 +1,6 @@
 {
     "Name"  :   "cockroach",
     "Url"   :   "github.com/cockroachdb/cockroach",
-	"Fetch" :	"git",
     "Plan"  :   "goGetAndMake",
     "Branch":   "beta-20170209"
 }
