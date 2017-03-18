@@ -1,0 +1,8 @@
+{
+    "Name"  :   "liteide-3.1",
+    "Zip"   :   "liteidex31.windows-qt5.zip",
+    "Url"   :   "https://github.com/visualfc/liteide/releases/download/x31/liteidex31.windows-qt5.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application"
+}
