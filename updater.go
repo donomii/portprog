@@ -223,7 +223,7 @@ func buildGcc(b Config, path string) {
 
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
-	doCommand(b.SzPath, []string{"x", file})
+	doCommand(b.SzPath, []string{"x", file, "-aoa"})
 }
 
 /*
@@ -238,16 +238,12 @@ func unzipWithPathMake(zipName) {
 }
 */
 
-func gitAndMake(targetDir, name, srcPath, url, p1 string) {
-	//p1 is the branch name
-	fmt.Println(figlet(name))
+func Make(b Config, p Package) {
 	cwd, _ := os.Getwd()
-	os.Chdir(srcPath)
-	doCommand("git", []string{"clone", url, name})
-	os.Chdir(name)
-	doCommand("git", []string{"checkout", p1})
-	thsDir, _ := os.Getwd()
-	fmt.Printf("Making in %v\n", thsDir)
+	os.Chdir(b.InstallDir)
+	os.Chdir(p.Name)
+	here, _ := os.Getwd()
+	fmt.Printf("Making in %v\n", here)
 	doCommand("make", []string{"install"})
 	os.Chdir(cwd)
 }
@@ -292,9 +288,31 @@ func zipWithNoDirectory(b Config, p Package) {
 	os.Chdir(cwd)
 }
 
+func doFetch(p Package, b Config) {
+	fetch := p.Fetch
+	if fetch == "web" {
+		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
+	}
+	if fetch == "git" {
+	}
+}
+
+func doGit(p Package, b Config) {
+	url := p.Url
+	branch := p.Branch
+	name := p.Name
+	targetDir := b.InstallDir
+	cwd, _ := os.Getwd()
+	os.Chdir(targetDir)
+	doCommand("git", []string{"clone", url, name})
+	os.Chdir(name)
+	doCommand("git", []string{"checkout", branch})
+	os.Chdir(cwd)
+}
+
 func doAll(p Package, b Config) {
 	figSay(p.Name)
-	downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
+	doFetch(p, b)
 	plan := p.Plan
 	targetDir := b.InstallDir
 	if plan == "standardConfigure" {
@@ -302,13 +320,13 @@ func doAll(p Package, b Config) {
 	} else if plan == "goGetAndMake" {
 		goGetAndMake(targetDir, p.Name, b.InstallDir, p.Url, p.Branch) //use zip field as goPath
 	} else if plan == "gitAndMake" {
-		gitAndMake(targetDir, p.Name, p.Zip, p.Url, p.Branch) //use zip field as srcDir (i.e. buildDir)
+		Make(b, p) //use zip field as srcDir (i.e. buildDir)
 	} else if plan == "zipWithNoDirectory" {
 		zipWithNoDirectory(b, p)
 	} else if plan == "zipWithDirectory" {
 		zipWithDirectory(b, p)
 	} else if plan == "customCommand" {
-		customCommand(b, p)
+		//customCommand(b, p)
 	}
 }
 
