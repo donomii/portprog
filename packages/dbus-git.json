@@ -1,5 +1,6 @@
 {
     "Name"  :   "DBUS",
     "Url"   :   "git://anongit.freedesktop.org/git/dbus/dbus",
+	"Fetch" :	"git",
     "Plan"  :   "standardConfigure"
 }

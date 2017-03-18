@@ -2,5 +2,6 @@
     "Name"  :   "zeromq-4.2.1",
     "Zip"   :   "zeromq-4.2.1.tar.gz",
     "Url"   :   "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz",
+	"Fetch" :	"web",
     "Plan"  :   "standardConfigure"
 }

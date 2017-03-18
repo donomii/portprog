@@ -1,0 +1,8 @@
+{
+    "Name"  :   "make-4.2",
+    "Zip"   :   "make-4.2.tar.gz",
+    "Url"   :   "http://gnuwin32.sourceforge.net/downlinks/make-bin-zip.php",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "Application"
+}
