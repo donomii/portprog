@@ -10,4 +10,5 @@ type Config struct {
 	VersionlessDependencies JsonStringArray //Package names, without version number.  We will pick a package matching that name, possibly at random
 	SzPath                  string          //Path to sevenzip
 	ZipDir                  string
+	SiloDir                 string
 }
