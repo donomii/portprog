@@ -16,10 +16,12 @@ import (
 )
 
 func downloadFile(filepath string, url string) (err error) {
+	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		// Create the file
 		out, err := os.Create(filepath)
 		if err != nil {
+			fmt.Printf("E> %v\n", err)
 			return err
 		}
 		defer out.Close()
@@ -27,6 +29,7 @@ func downloadFile(filepath string, url string) (err error) {
 		// Get the data
 		resp, err := http.Get(url)
 		if err != nil {
+			fmt.Printf("E> %v\n", err)
 			return err
 		}
 		defer resp.Body.Close()
@@ -34,6 +37,7 @@ func downloadFile(filepath string, url string) (err error) {
 		// Writer the body to file
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
+			fmt.Printf("E> %v\n", err)
 			return err
 		}
 	}
@@ -44,8 +48,8 @@ func doCommand(cmd string, args []string) {
 	fmt.Println("C>", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "IO> %v", string(out))
-		fmt.Fprintf(os.Stderr, "E> %v", err)
+		fmt.Fprintf(os.Stderr, "IO> %v\n", string(out))
+		fmt.Fprintf(os.Stderr, "E> %v\n", err)
 		//os.Exit(1)
 	}
 	if string(out) != "" {
@@ -312,9 +316,17 @@ func doGit(p Package, b Config) {
 
 func doAll(p Package, b Config) {
 	figSay(p.Name)
-	doFetch(p, b)
-	plan := p.Plan
 	targetDir := b.InstallDir
+	doFetch(p, b)
+
+	cwd, _ := os.Getwd()
+	os.Chdir(targetDir)
+
+	unBzLib(b, p.Name)
+	unTgzLib(b, p.Name)
+
+	plan := p.Plan
+	os.Chdir(cwd)
 	if plan == "standardConfigure" {
 		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir) })
 	} else if plan == "goGetAndMake" {
@@ -354,7 +366,7 @@ func isWindows() bool {
 func main() {
 	printEnv()
 	installGcc := true
-	installGo := false
+	installGo := true
 	figSay(runtime.GOOS)
 	os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
 	folderPath, err := osext.ExecutableFolder()
@@ -379,6 +391,8 @@ func main() {
 	os.Setenv("GOPATH", myDir)
 	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 
+	os.Chdir(folderPath)
+
 	var b Config
 	b.InstallDir = rootDir
 	b.GoPath = myDir
@@ -388,8 +402,12 @@ func main() {
 	b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
 	os.Mkdir(b.SiloDir, os.ModeDir|0777)
 
-	processDir(b, "packages-windows")
-	//processDir(b, "packages")
+	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+
+	if isWindows() {
+		fmt.Println(figlet("7zip"))
+		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
+	}
 
 	//fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
 	//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
@@ -398,19 +416,19 @@ func main() {
 	downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
 	downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
 	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
-	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+
 	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
 	downloadFile("zips/go1.7.5.darwin-amd64.tar.gz", "https://storage.googleapis.com/golang/go1.7.5.darwin-amd64.tar.gz")
+	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	fmt.Println(figlet("GCC COMPILER"))
 	//os.Exit(0)
 	if installGcc {
-		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-			downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
+		if !isWindows() {
 			buildGcc(b, folderPath)
 		} else {
-			fmt.Println(figlet("DOWNLOADING"))
-			doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
-			doCommand("7zip/7z.exe", []string{"x", "zips/nuwen-14.1.7z"})
+			os.Chdir(rootDir)
+
+			doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-14.1.7z"})
 			os.Chdir("components-14.1")
 			files, err := ioutil.ReadDir(".")
 			if err != nil {
@@ -427,7 +445,7 @@ func main() {
 
 		}
 	}
-	os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", folderPath, os.Getenv("PATH")))
+	os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", rootDir, os.Getenv("PATH")))
 
 	if installGo {
 		fmt.Println(figlet("GO COMPILER"))
@@ -449,6 +467,10 @@ func main() {
 		}
 		printEnv()
 	}
+
+	processDir(b, "packages-windows")
+	//processDir(b, "packages")
+
 	/*
 		figSay("LIBRARIES")
 		repos := loadRepos("libs")
@@ -470,6 +492,7 @@ func main() {
 	fmt.Printf(setCommand(newPath))
 	newPath = fmt.Sprintf("%v/bin/", myDir)
 	fmt.Printf(setCommand(newPath))
+	fmt.Printf(setCommand(fmt.Sprintf("%v/components-14.1/bin/;%v", rootDir, os.Getenv("PATH"))))
 	fmt.Printf("Job's a good'un, boss\n")
 }
 
