@@ -1,7 +1,7 @@
 {
-    "Name"  :   "SDL2-2.0.5",
-    "Zip"   :   "SDL2-2.0.5.tar.gz",
-    "Url"   :   "https://www.libsdl.org/release/SDL2-2.0.5.tar.gz",
+    "Name"  :   "sdl-nightly",
+    "Zip"   :   "sdl-visualstudio-3238.zip",
+    "Url"   :   "https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio/sdl-visualstudio-3238.zip",
 	"Fetch" :	"web",
-    "Plan"  :   "standardConfigure"
+    "Plan"  :   "zipWithDirectory"
 }
