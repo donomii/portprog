@@ -1,5 +1,4 @@
 github.com/BurntSushi/cmail
-github.com/BurntSushi/gribble
 github.com/BurntSushi/wingo
 github.com/DoZator/simple_gallery
 github.com/DyegoCosta/snake-game
@@ -98,5 +97,4 @@ github.com/xyproto/algernon
 github.com/yudai/gotty
 github.com/yuroyoro/goast-viewer
 github.com/zyedidia/micro/cmd/...
-go.googlesource.com/go
 golang.org/x/tools/cmd/...
