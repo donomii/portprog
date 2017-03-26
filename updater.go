@@ -9,6 +9,7 @@ import "strings"
 import "os"
 import "os/exec"
 import "github.com/kardianos/osext"
+import "flag"
 
 import (
 	"io"
@@ -298,6 +299,17 @@ func doFetch(p Package, b Config) {
 		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
 	}
 	if fetch == "git" {
+		url := p.Url
+		branch := p.Branch
+		name := p.Name
+		targetDir := b.InstallDir
+		cwd, _ := os.Getwd()
+		os.Chdir(targetDir)
+		doCommand("git", []string{"clone", url, name, "--recursive"})
+		os.Chdir(name)
+		doCommand("git", []string{"checkout", branch})
+		doCommand("git", []string{"submodule", "foreach", "--recursive", "git", "checkout", "master"})
+		os.Chdir(cwd)
 	}
 }
 
@@ -364,9 +376,19 @@ func isWindows() bool {
 }
 
 func main() {
+	var finstallGcc = flag.Bool("gcc", false, "Also install gcc locally")
+	var finstallGo = flag.Bool("golang", false, "Also install the Go compiler")
+	var installGcc bool = *finstallGcc
+	var installGo bool = *finstallGo
+	//var skip = flag.Int("skip", -1, "Skip every nth record")
+	/*var mapName string
+	if len(os.Args) > 1 {
+		mapName = os.Args[1]
+		log.Println(mapName)
+	}*/
+
+	flag.Parse()
 	printEnv()
-	installGcc := true
-	installGo := true
 	figSay(runtime.GOOS)
 	os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
 	folderPath, err := osext.ExecutableFolder()
