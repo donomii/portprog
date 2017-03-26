@@ -1,0 +1,8 @@
+{
+    "Name"  :   "openalsoft",
+    "Zip"   :   "",
+    "Url"   :   "https://github.com/kcat/openal-soft",
+	"Fetch" :	"git",
+	"Branch" : "master",
+    "Plan"  :   "cmake"
+}
