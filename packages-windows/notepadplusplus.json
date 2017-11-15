@@ -1,0 +1,8 @@
+{
+    "Name"  :   "notepad++-7.5.1",
+    "Zip"   :   "npp.7.5.1.bin.zip",
+    "Url"   :   "https://notepad-plus-plus.org/repository/7.x/7.5.1/npp.7.5.1.bin.zip",
+	  "Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	  "Type"  :   "Application"
+}
