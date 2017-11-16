@@ -3,6 +3,6 @@
     "Zip"   :   "strawberry-perl-5.26.1.1-64bit-portable.zip",
     "Url"   :   "http://strawberryperl.com/download/5.26.1.1/strawberry-perl-5.26.1.1-64bit-portable.zip",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory",
+    "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "Application"
 }
