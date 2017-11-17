@@ -584,7 +584,7 @@ func main() {
 	"packs/strawberry/perl/site/bin",
 	"packs/strawberry-perl/perl/bin",
 	"packs/strawberry-perl/c/bin",
-	"langlibs/gopath/bin"
+	"langlibs/gopath/bin",
 	};	
 	
 	fmt.Println(figlet("ENVIRONMENT"))
