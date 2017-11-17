@@ -1,0 +1,8 @@
+{
+    "Name"  :   "lazarus-1.8.0RC5",
+    "Zip"   :   "lazarus-1.8.0-RC5.zip",
+    "Url"   :   "https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/Lazarus%201.8.0RC5/lazarus-1.8.0-RC5.zip/download",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application"
+}

@@ -1,0 +1,8 @@
+{
+    "Name"  :   "io",
+    "Zip"   :   "iobin-win32-current.zip",
+    "Url"   :   "http://iobin.suspended-chord.info/win32/iobin-win32-current.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application"
+}
