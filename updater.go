@@ -18,6 +18,9 @@ import (
 )
 
 var installDir = "packs"
+var installGcc = false
+var installGo = false
+var noGit = false
 
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
@@ -260,6 +263,7 @@ func Make(b Config, p Package) {
 }
 
 func goGetAndMake(targetDir, name, goPath, url, p1 string) {
+	if noGit { return }
 	//p1 is the branch name
 	fmt.Println(figlet(name))
 	cwd, _ := os.Getwd()
@@ -307,6 +311,7 @@ func doFetch(p Package, b Config) {
 		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
 	}
 	if fetch == "git" {
+		if noGit { return }
 		url := p.Url
 		branch := p.Branch
 		name := p.Name
@@ -342,13 +347,13 @@ func doAll(p Package, b Config) {
 	cwd, _ := os.Getwd()
 	os.Chdir(targetDir)
 
-	unBzLib(b, p.Name)
-	unTgzLib(b, p.Name)
+	//unBzLib(b, p.Name)
+	//unTgzLib(b, p.Name)
 
 	plan := p.Plan
 	os.Chdir(cwd)
 	if plan == "standardConfigure" {
-		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir) })
+		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir) 
 	} else if plan == "goGetAndMake" {
 		goGetAndMake(targetDir, p.Name, b.InstallDir, p.Url, p.Branch) //use zip field as goPath
 	} else if plan == "gitAndMake" {
@@ -377,10 +382,10 @@ func processDir(b Config, d string) {
 
 	for _, file := range files {
 
-fname := fmt.Sprintf("%v/%v", d, file.Name())
+		fname := fmt.Sprintf("%v/%v", d, file.Name())
 		
 		if _, err := os.Stat(fname); os.IsNotExist(err) {
-		fname = fmt.Sprintf("%v\%v", d, file.Name())
+			fname = fmt.Sprintf("%v\\%v", d, file.Name())
 		}
 		p := LoadJSON(fname)	
 		working = working + 1
@@ -392,7 +397,6 @@ fname := fmt.Sprintf("%v/%v", d, file.Name())
 			os.Exit(0)
 		}
 		time.Sleep(1 * time.Second)
-		doAll(p, b)
 	}
 }
 
@@ -402,17 +406,10 @@ func isWindows() bool {
 }
 
 func main() {
-	var finstallGcc = flag.Bool("gcc", false, "Also install gcc locally")
-	var finstallGo = flag.Bool("golang", false, "Also install the Go compiler")
-	var installGcc bool = *finstallGcc
-	var installGo bool = *finstallGo
-	//var skip = flag.Int("skip", -1, "Skip every nth record")
-	/*var mapName string
-	if len(os.Args) > 1 {
-		mapName = os.Args[1]
-		log.Println(mapName)
-	}*/
-
+	flag.BoolVar(&installGcc, "gcc", false, "Also install gcc locally")
+	flag.BoolVar(&installGo, "golang", false, "Also install the Go compiler")
+	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
+	
 	flag.Parse()
 	printEnv()
 	figSay(runtime.GOOS)
