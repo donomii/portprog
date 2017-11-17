@@ -2,13 +2,15 @@
 
 Interpreters and libraries for the programmer on the move
 
-## [Download](https://github.com/donomii/portprog/releases)
+# [Download](https://github.com/donomii/portprog/releases)
 
 ## Easy setup
 
-I frequently have to install my programming tools on a fresh computer.
-  Sometimes it's a new laptop, but usually it's a fresh VM or a computer at a client site.
-  And it is always frustrating, because it takes me hours to track down every minor library and
+Double click to download GCC, Go, Perl and support libraries
+
+## 
+
+I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and
   patch that I need to get something compiled.
   
 Of course, there are no _minor_ libraries, because missing any of them halts the compile.  So
