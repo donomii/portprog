@@ -23,9 +23,6 @@ Or checkout the [latest code](https://github.com/donomii/portprog) from github.
 	
 ## Options
 
-There aren't a lot.  This isn't another distribution, it's just a fancy downloader and unpacker.  There's no dependency management or build flags 
-or whatever.
-
 	--no-gcc	Don't download or install gcc
 	--no-golang	Don't download or install golang
 	--no-git 	Don't attempt to clone or update any repositories via git
