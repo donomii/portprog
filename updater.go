@@ -458,12 +458,10 @@ func main() {
 	//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
 	//fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
 
-	downloadFile("zips/nuwen-14.1.7z", "https://nuwen.net/files/mingw/components-14.1.7z")
+	downloadFile("zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
 	downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
 	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
-
-	downloadFile("zips/go1.7.5.windows-amd64.zip", "https://storage.googleapis.com/golang/go1.7.5.windows-amd64.zip")
-	downloadFile("zips/go1.7.5.darwin-amd64.tar.gz", "https://storage.googleapis.com/golang/go1.7.5.darwin-amd64.tar.gz")
+	
 	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	fmt.Println(figlet("GCC COMPILER"))
 	//os.Exit(0)
@@ -473,7 +471,7 @@ func main() {
 		} else {
 			os.Chdir(rootDir)
 
-			doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-14.1.7z"})
+			doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-15.3.7.7z"})
 			os.Chdir("components-14.1")
 			files, err := ioutil.ReadDir(".")
 			if err != nil {
