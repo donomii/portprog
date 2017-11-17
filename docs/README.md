@@ -9,7 +9,7 @@ Interpreters and libraries for the programmer on the move
 I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and
   patch that I need to get something compiled.  So I put together this installer to get my environment set up as quickly as possible.
 
-# Installation
+# Install
 
 ## Windows
 
