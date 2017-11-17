@@ -577,13 +577,14 @@ func main() {
 	
 
 	subPaths := []string{
-	"PortableGit-2.15.0/bin",
-	"go/bin",
+	"packs/PortableGit-2.15.0/bin",
+	"packs/go/bin",
 	"7zip",
-	"components-15.3.7/bin",
-	"strawberry/perl/site/bin",
-	"strawberry-perl/perl/bin",
-	"strawberry-perl/c/bin",
+	"packs/components-15.3.7/bin",
+	"packs/strawberry/perl/site/bin",
+	"packs/strawberry-perl/perl/bin",
+	"packs/strawberry-perl/c/bin",
+	"langlibs/gopath/bin"
 	};	
 	
 	fmt.Println(figlet("ENVIRONMENT"))
@@ -592,17 +593,17 @@ func main() {
 	fmt.Println("Windows:")
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
-		fmt.Printf("set PATH=%v\\%v;%%PATH%%\n", rootDir, winpath)
+		fmt.Printf("set PATH=%v\\%v;%%PATH%%\n", folderPath, winpath)
 	}	
 	
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		fmt.Printf("set -x %v/%v $PATH\n", rootDir, v)
+		fmt.Printf("set -x %v/%v $PATH\n", folderPath, v)
 	}
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Printf("export PATH=%v/%v:$PATH\n", rootDir, v)
+		fmt.Printf("export PATH=%v/%v:$PATH\n", folderPathDir, v)
 	}
 	
 	for  {
