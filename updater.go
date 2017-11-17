@@ -603,7 +603,7 @@ func main() {
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Printf("export PATH=%v/%v:$PATH\n", folderPathDir, v)
+		fmt.Printf("export PATH=%v/%v:$PATH\n", folderPath, v)
 	}
 	
 	for  {
