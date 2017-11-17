@@ -37,7 +37,7 @@ them.  On future runs, it will check the zips directory and use what it finds th
 
 ## Adding your own
 
-The whole purpose of this is to manage your own downloads.  You can easily add any file you want, just go to the packages directory (or packages-windows), copy
+The whole purpose of this is to manage your own downloads.  You can easily add any download you want, just go to the packages directory (or packages-windows), copy
 a file there, and change it to download from the url you want.
 
 Then rerun portprog, and it will download and unpack your file.
@@ -46,7 +46,7 @@ Then rerun portprog, and it will download and unpack your file.
 
 Delete the directory.  Portprog does not modify any part of your system outside of its own directory.
 
-** Warning **
+## Warning
 
 I can't control other programs and libraries, so when you use a program or library that portprog downloads for you, this third party might change your system.  
 I can't stop that, but I try not to use any programs that would do that.
