@@ -44,4 +44,4 @@ Delete the directory.  Portprog does not modify any part of your system outside 
 
 # Download now!
 
-New releases are available at https://github.com/donomii/portprog/releases
+New releases are available at [https://github.com/donomii/portprog/releases](https://github.com/donomii/portprog/releases)
