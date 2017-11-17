@@ -372,7 +372,13 @@ func processDir(b Config, d string) {
 	}
 
 	for _, file := range files {
-		p := LoadJSON(fmt.Sprintf("%v/%v", d, file.Name()))
+
+fname := fmt.Sprintf("%v/%v", d, file.Name())
+		
+		if _, err := os.Stat(fname); os.IsNotExist(err) {
+		fname = fmt.Sprintf("%v\%v", d, file.Name())
+		}
+		p := LoadJSON(fname)	
 		working = working + 1
 		go doAll(p, b)
 	}
@@ -382,6 +388,7 @@ func processDir(b Config, d string) {
 			os.Exit(0)
 		}
 		time.Sleep(1 * time.Second)
+		doAll(p, b)
 	}
 }
 
@@ -436,8 +443,8 @@ func main() {
 	b.SourceDir = srcDir
 	b.SzPath = SzPath
 	b.ZipDir = zipsDir
-	b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
-	os.Mkdir(b.SiloDir, os.ModeDir|0777)
+	//b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
+	//os.Mkdir(b.SiloDir, os.ModeDir|0777)
 
 	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
 
@@ -508,7 +515,7 @@ func main() {
 	processDir(b, "packages-windows")
 	//processDir(b, "packages")
 
-	/*
+	
 		figSay("LIBRARIES")
 		repos := loadRepos("libs")
 		for _, v := range repos {
@@ -520,7 +527,7 @@ func main() {
 		for _, v := range repos {
 			installGithub(v)
 		}
-	*/
+	
 
 	fmt.Println(figlet("DO THIS"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
