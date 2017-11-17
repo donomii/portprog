@@ -1,5 +1,6 @@
 package main
 
+import "time"
 import "log"
 import "github.com/probandula/figlet4go"
 import "runtime"
@@ -15,6 +16,8 @@ import (
 	"io"
 	"net/http"
 )
+
+var installDir = "packs"
 
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
@@ -156,15 +159,14 @@ func makeOpt(optName, optVal string) string {
 	return fmt.Sprintf("--%v=%v", optName, optVal)
 }
 
-func unTgzLib(b Config, lib string) {
-	path := fmt.Sprintf("%v/%v.tar.gz", b.ZipDir, lib)
-	path2 := fmt.Sprintf("%v.tar", lib)
-	if _, err := os.Stat(path); err == nil {
+func unTgzLib(b Config, zipPath string) {
+	path2 := strings.Replace(zipPath, ".gz", "", -1)
+	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
-			unSevenZ(b, path)
+			unSevenZ(b, zipPath)
 			unSevenZ(b, path2)
 		} else {
-			doCommand("tar", []string{"-xzvf", path})
+			doCommand("tar", []string{"-xzvf", zipPath})
 		}
 	}
 }
@@ -208,7 +210,7 @@ func standardConfigureBuild(b Config, name, buildDir string, args []string) {
 
 func buildGcc(b Config, path string) {
 	arch := "x86_64"
-	targetDir := fmt.Sprintf("%v/fakeRoot", path)
+	targetDir := fmt.Sprintf("%v/%v", path, installDir)
 	//srcDir := fmt.Sprintf("%v/src", path)
 	os.Chdir(path)
 	fmt.Println(figlet("GMP"))
@@ -280,6 +282,7 @@ func zipWithDirectory(b Config, p Package) {
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
 	unSevenZ(b, zipFilePath(b, p.Zip))
+	unTgzLib(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
 }
 
@@ -290,6 +293,7 @@ func zipWithNoDirectory(b Config, p Package) {
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
 	unSevenZ(b, zipFilePath(b, p.Zip))
+	unTgzLib(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
 }
 
@@ -352,11 +356,14 @@ func doAll(p Package, b Config) {
 	} else if plan == "customCommand" {
 		//customCommand(b, p)
 	}
+	working--
 }
 
 func figSay(s string) {
 	fmt.Println(figlet(s))
 }
+
+var working = 0
 
 func processDir(b Config, d string) {
 	files, err := ioutil.ReadDir(d)
@@ -366,7 +373,15 @@ func processDir(b Config, d string) {
 
 	for _, file := range files {
 		p := LoadJSON(fmt.Sprintf("%v/%v", d, file.Name()))
-		doAll(p, b)
+		working = working + 1
+		go doAll(p, b)
+	}
+
+	for {
+		if working == 0 {
+			os.Exit(0)
+		}
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -397,7 +412,7 @@ func main() {
 	}
 	myDir := fmt.Sprintf("%v/goFiles", folderPath)
 	zipsDir := fmt.Sprintf("%v/zips", folderPath)
-	rootDir := fmt.Sprintf("%v/fakeRoot", folderPath)
+	rootDir := fmt.Sprintf("%v/%v", folderPath, installDir)
 	srcDir := fmt.Sprintf("%v/src", folderPath)
 	SzDir := fmt.Sprintf("%v/7zip", folderPath)
 	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
