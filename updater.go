@@ -18,8 +18,8 @@ import (
 )
 
 var installDir = "packs"
-var installGcc = false
-var installGo = false
+var noGcc = false
+var noGo = false
 var noGit = false
 
 func downloadFile(filepath string, url string) (err error) {
@@ -162,6 +162,26 @@ func makeOpt(optName, optVal string) string {
 	return fmt.Sprintf("--%v=%v", optName, optVal)
 }
 
+func unTar(b Config, zipPath string) {
+	p2 := strings.Replace(zipPath, ".gz", "", -1)
+	p2 = strings.Replace(p2, ".lzma", "", -1)
+	p2 = strings.Replace(p2, ".bz2", "", -1)
+	splits := strings.Split(p2, "/")
+	fname := splits[len(splits)-1]
+	if _, err := os.Stat(zipPath); err == nil {
+		if isWindows() {
+			unSevenZ(b, zipPath)
+			unSevenZ(b, fname)
+		} else {
+			doCommand("tar", []string{"-xzvf", zipPath})
+			doCommand("tar", []string{"-xjvf", zipPath})
+		}
+	} else {
+	log.Println("Could not find ", fname)
+	}
+}
+
+
 func unTgzLib(b Config, zipPath string) {
 	p2 := strings.Replace(zipPath, ".gz", "", -1)
 	splits := strings.Split(p2, "/")
@@ -200,7 +220,6 @@ func chmod(perms, path string) {
 }
 
 func standardConfigureBuild(b Config, name, buildDir string, args []string) {
-	fmt.Println(figlet(name))
 	cwd, _ := os.Getwd()
 	configurePath := fmt.Sprintf("%v/%v/%v", cwd, name, "configure")
 	unBzLib(b, name)
@@ -237,12 +256,11 @@ func buildGcc(b Config, path string) {
 
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
-	doCommand(b.SzPath, []string{"x", "-aoa", file })
+	doCommand(b.SzPath, []string{"x", file, "-aoa" })
 }
 
 /*
 func unzipWithPathMake(zipName) {
-	fmt.Println(figlet(zipName))
 	cwd, _ := os.Getwd()
 	os.Chdir(srcDir)
 	unSevenZ(b, "../zips/zeromq-4.2.1.zip")
@@ -265,7 +283,6 @@ func Make(b Config, p Package) {
 func goGetAndMake(targetDir, name, goPath, url, p1 string) {
 	if noGit { return }
 	//p1 is the branch name
-	fmt.Println(figlet(name))
 	cwd, _ := os.Getwd()
 	doCommand("go", []string{"get", "-u", url})
 	os.Chdir(goPath)
@@ -284,24 +301,22 @@ func zipFilePath(b Config, name string) string {
 }
 
 func zipWithDirectory(b Config, p Package) {
-	fmt.Println(figlet(p.Name))
 	cwd, _ := os.Getwd()
 	targetDir := fmt.Sprintf("%v", b.InstallDir) //Make an appsdir and install there?
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
+	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
-	unTgzLib(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
 }
 
 func zipWithNoDirectory(b Config, p Package) {
-	fmt.Println(figlet(p.Name))
 	cwd, _ := os.Getwd()
 	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
+	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
-	unTgzLib(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
 }
 
@@ -364,6 +379,8 @@ func doAll(p Package, b Config) {
 		zipWithDirectory(b, p)
 	} else if plan == "customCommand" {
 		//customCommand(b, p)
+	} else {
+		log.Println("Unknown plan: ", plan)
 	}
 	working--
 }
@@ -406,8 +423,8 @@ func isWindows() bool {
 }
 
 func main() {
-	flag.BoolVar(&installGcc, "gcc", false, "Also install gcc locally")
-	flag.BoolVar(&installGo, "golang", false, "Also install the Go compiler")
+	flag.BoolVar(&noGcc, "no-gcc", false, "Don't install gcc locally")
+	flag.BoolVar(&noGo, "no-golang", false, "Don't install the Go compiler")
 	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
 	
 	flag.Parse()
@@ -465,7 +482,7 @@ func main() {
 	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	fmt.Println(figlet("GCC COMPILER"))
 	//os.Exit(0)
-	if installGcc {
+	if !noGcc {
 		if !isWindows() {
 			buildGcc(b, folderPath)
 		} else {
@@ -490,7 +507,7 @@ func main() {
 	}
 	os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", rootDir, os.Getenv("PATH")))
 
-	if installGo {
+	if !noGo {
 		fmt.Println(figlet("GO COMPILER"))
 		os.Mkdir(goDir, os.ModeDir|0777)
 
@@ -528,14 +545,30 @@ func main() {
 		}
 	
 
+	subPaths := []string{
+	"packs/PortableGit-2.15.0/bin",
+	"go/bin",
+	"7zip",
+	"packs/components-14.1/bin"}
 	fmt.Println(figlet("DO THIS"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
-	newPath := fmt.Sprintf("%v/usr/local/go/bin/", folderPath)
-	fmt.Printf(setCommand(newPath))
-	newPath = fmt.Sprintf("%v/bin/", myDir)
-	fmt.Printf(setCommand(newPath))
-	fmt.Printf(setCommand(fmt.Sprintf("%v/components-14.1/bin/;%v", rootDir, os.Getenv("PATH"))))
+	fmt.Println("Windows:")
+	for _, v := range subPaths {
+		winpath := strings.Replace(v, "/", "\\", -1)
+		fmt.Printf("set %v\\%v;\\%PATH\\%\n", myDir, winpath)
+	}
+	
+	fmt.Println("Fish Shell:")
+	for _, v := range subPaths {
+		fmt.Printf("set -x %v/%v $PATH\n", myDir, v)
+	}
+	
+	fmt.Println("Bash Shell")
+	for _, v := range subPaths {
+		fmt.Printf("export PATH=%v/%v:$PATH\n", myDir, v)
+	}
+	
 	fmt.Printf("Job's a good'un, boss\n")
 }
 
