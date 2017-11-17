@@ -409,12 +409,7 @@ func processDir(b Config, d string) {
 		doAll(p, b)
 	}
 
-	for {
-		if working == 0 {
-			os.Exit(0)
-		}
-		time.Sleep(1 * time.Second)
-	}
+	
 }
 
 func isWindows() bool {
@@ -435,29 +430,34 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	myDir := fmt.Sprintf("%v/goFiles", folderPath)
+	
+	langlibs := fmt.Sprintf("%v/langlibs", folderPath)
+	gopathDir := fmt.Sprintf("%v/gopath", langlibs)
+	cpanDir := fmt.Sprintf("%v/cpan", langlibs)
 	zipsDir := fmt.Sprintf("%v/zips", folderPath)
 	rootDir := fmt.Sprintf("%v/%v", folderPath, installDir)
 	srcDir := fmt.Sprintf("%v/src", folderPath)
 	SzDir := fmt.Sprintf("%v/7zip", folderPath)
 	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
 	goDir := fmt.Sprintf("%v/go", folderPath)
-	fmt.Println("I> Creating", myDir)
-	os.Mkdir(myDir, os.ModeDir|0777)
+	fmt.Println("I> Creating directories")
+	os.Mkdir(langlibs, os.ModeDir|0777)
+	os.Mkdir(gopathDir, os.ModeDir|0777)
+	os.Mkdir(cpanDir, os.ModeDir|0777)
 	os.Mkdir(zipsDir, os.ModeDir|0777)
 	os.Mkdir(rootDir, os.ModeDir|0777)
 	os.Mkdir(SzDir, os.ModeDir|0777)
 	os.Mkdir(srcDir, os.ModeDir|0777)
-	fmt.Println("Creating ", goDir)
+	fmt.Println("I> Creating ", goDir)
 	os.Mkdir(goDir, os.ModeDir|0777)
-	os.Setenv("GOPATH", myDir)
+	os.Setenv("GOPATH", gopathDir)
 	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
 
 	os.Chdir(folderPath)
 
 	var b Config
 	b.InstallDir = rootDir
-	b.GoPath = myDir
+	b.GoPath = gopathDir
 	b.SourceDir = srcDir
 	b.SzPath = SzPath
 	b.ZipDir = zipsDir
@@ -467,7 +467,7 @@ func main() {
 	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
 
 	if isWindows() {
-		fmt.Println(figlet("7zip"))
+		figSay("7zip")
 		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
 	}
 
@@ -480,7 +480,7 @@ func main() {
 	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
 	
 	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
-	fmt.Println(figlet("GCC COMPILER"))
+	figSay("GCC COMPILER")
 	//os.Exit(0)
 	if !noGcc {
 		if !isWindows() {
@@ -532,41 +532,51 @@ func main() {
 	//processDir(b, "packages")
 
 	
+	if !noGit {
 		figSay("LIBRARIES")
 		repos := loadRepos("libs")
 		for _, v := range repos {
+			v = strings.Replace(v, "\r", "", -1)
 			installGithub(v)
 		}
 
 		figSay("APPLICATIONS")
 		repos = loadRepos("apps")
 		for _, v := range repos {
+			v = strings.Replace(v, "\r", "", -1)
 			installGithub(v)
 		}
+	}
 	
 
 	subPaths := []string{
 	"packs/PortableGit-2.15.0/bin",
 	"go/bin",
 	"7zip",
-	"packs/components-14.1/bin"}
-	fmt.Println(figlet("DO THIS"))
+	"packs/components-15.3.7/bin",
+	};	
+	
+	fmt.Println(figlet("ENVIRONMENT"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
 	fmt.Println("Windows:")
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
-		fmt.Printf("set %v\\%v;\\%PATH\\%\n", myDir, winpath)
-	}
+		fmt.Printf("set PATH=%v\\%v;%%PATH%%\n", rootDir, winpath)
+	}	
 	
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		fmt.Printf("set -x %v/%v $PATH\n", myDir, v)
+		fmt.Printf("set -x %v/%v $PATH\n", rootDir, v)
 	}
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Printf("export PATH=%v/%v:$PATH\n", myDir, v)
+		fmt.Printf("export PATH=%v/%v:$PATH\n", rootDir, v)
+	}
+	
+	for  {
+		time.Sleep(1 * time.Second)
 	}
 	
 	fmt.Printf("Job's a good'un, boss\n")
@@ -574,4 +584,4 @@ func main() {
 
 func setCommand(p string) string {
 	return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\nset PATH=%v;\n\n\n", p, p, p)
-}
+}	
