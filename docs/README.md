@@ -27,7 +27,7 @@ There aren't a lot.  This isn't another distribution, it's just a fancy download
 or whatever.
 
 	--no-gcc	Don't download or install gcc
-	--no-golang Don't download or install golang
+	--no-golang	Don't download or install golang
 	--no-git 	Don't attempt to clone or update any repositories via git
 	
 ## Operation
