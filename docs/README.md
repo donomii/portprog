@@ -4,17 +4,12 @@ Interpreters and libraries for the programmer on the move
 
 # [Download](https://github.com/donomii/portprog/releases)
 
-## Easy setup
-
-Double click to download GCC, Go, Perl and support libraries
+Double click to install GCC, Go, Perl, support libraries and much more!
 
 ## 
 
 I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and
-  patch that I need to get something compiled.
-  
-Of course, there are no _minor_ libraries, because missing any of them halts the compile.  So
-I put together this installer to get my environment set up as quickly as possible.
+  patch that I need to get something compiled.  So I put together this installer to get my environment set up as quickly as possible.
 
 # Installation
 
