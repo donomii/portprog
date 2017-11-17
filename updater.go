@@ -160,14 +160,18 @@ func makeOpt(optName, optVal string) string {
 }
 
 func unTgzLib(b Config, zipPath string) {
-	path2 := strings.Replace(zipPath, ".gz", "", -1)
+	p2 := strings.Replace(zipPath, ".gz", "", -1)
+	splits := strings.Split(p2, "/")
+	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
 			unSevenZ(b, zipPath)
-			unSevenZ(b, path2)
+			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 		}
+	} else {
+	log.Println("Could not extract ", fname)
 	}
 }
 
@@ -230,7 +234,7 @@ func buildGcc(b Config, path string) {
 
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
-	doCommand(b.SzPath, []string{"x", file, "-aoa"})
+	doCommand(b.SzPath, []string{"x", "-aoa", file })
 }
 
 /*
@@ -374,7 +378,7 @@ func processDir(b Config, d string) {
 	for _, file := range files {
 		p := LoadJSON(fmt.Sprintf("%v/%v", d, file.Name()))
 		working = working + 1
-		go doAll(p, b)
+		doAll(p, b)
 	}
 
 	for {
