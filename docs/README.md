@@ -17,10 +17,10 @@ Download a new release from the [Releases page](https://github.com/donomii/portp
 
 ## Linux and Mac
 
-	go get -u github.com/donomii/portprog
-	go build
-	./portprog
-
+	Download a source release from the [Releases page](https://github.com/donomii/portprog/releases), then follow the [build instructions](https://github.com/donomii/portprog).
+	
+	Or checkout the [latest code](https://github.com/donomii/portprog) from github.
+	
 ## Options
 
 There aren't a lot.  This isn't another distribution, it's just a fancy downloader and unpacker.  There's no dependency management or build flags 
