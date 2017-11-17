@@ -1,0 +1,8 @@
+{
+    "Name"  :   "tdm64-fortran",
+    "Zip"   :   "gcc-5.1.0-tdm64-1-fortran.tar.lzma",
+    "Url"   :   "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-fortran.tar.lzma",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application"
+}
