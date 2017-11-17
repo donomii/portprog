@@ -17,9 +17,9 @@ Download a new release from the [Releases page](https://github.com/donomii/portp
 
 ## Linux and Mac
 
-	Download a source release from the [Releases page](https://github.com/donomii/portprog/releases), then follow the [build instructions](https://github.com/donomii/portprog).
+Download a source release from the [Releases page](https://github.com/donomii/portprog/releases), then follow the [build instructions](https://github.com/donomii/portprog).
 	
-	Or checkout the [latest code](https://github.com/donomii/portprog) from github.
+Or checkout the [latest code](https://github.com/donomii/portprog) from github.
 	
 ## Options
 
