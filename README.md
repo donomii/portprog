@@ -1,6 +1,6 @@
-# The Portable Programmer
+# [The Portable Programmer](https://donomii.github.io/portprog/)
 
-Interpreters and libraries for the programmer on the move
+Interpreters and libraries for the programmer on the move.  [Read the website](https://donomii.github.io/portprog/)
 
 ## Easy setup
 
