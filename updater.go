@@ -78,6 +78,13 @@ func installGithub(repo string) {
 	doCommand(cmd, args)
 }
 
+func installCpan(repo string) {
+	cmd := "cpan"
+	args := []string{repo}
+	fmt.Printf("I> Installing %v\n", repo)
+	doCommand(cmd, args)
+}
+
 func loadRepos(filename string) []string {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -382,7 +389,7 @@ func doAll(p Package, b Config) {
 	} else {
 		log.Println("Unknown plan: ", plan)
 	}
-	working--
+	
 }
 
 func figSay(s string) {
@@ -398,15 +405,18 @@ func processDir(b Config, d string) {
 	}
 
 	for _, file := range files {
-
+		//working = working + 1
+		
 		fname := fmt.Sprintf("%v/%v", d, file.Name())
 		
 		if _, err := os.Stat(fname); os.IsNotExist(err) {
 			fname = fmt.Sprintf("%v\\%v", d, file.Name())
 		}
 		p := LoadJSON(fname)	
-		working = working + 1
+		
 		doAll(p, b)
+		//working--
+		
 	}
 
 	
@@ -532,9 +542,23 @@ func main() {
 	//processDir(b, "packages")
 
 	
+
+		var repos []string
+	
+		figSay("CPAN")
+		working++
+		go func () {
+			repos = loadRepos("cpan.txt")
+			for _, v := range repos {
+				v = strings.Replace(v, "\r", "", -1)
+				installCpan(v)
+			}
+			working--
+		}()
+	
 	if !noGit {
 		figSay("LIBRARIES")
-		repos := loadRepos("libs")
+		repos = loadRepos("libs")
 		for _, v := range repos {
 			v = strings.Replace(v, "\r", "", -1)
 			installGithub(v)
@@ -546,14 +570,20 @@ func main() {
 			v = strings.Replace(v, "\r", "", -1)
 			installGithub(v)
 		}
+		
+
+		
 	}
 	
 
 	subPaths := []string{
-	"packs/PortableGit-2.15.0/bin",
+	"PortableGit-2.15.0/bin",
 	"go/bin",
 	"7zip",
-	"packs/components-15.3.7/bin",
+	"components-15.3.7/bin",
+	"strawberry/perl/site/bin",
+	"strawberry-perl/perl/bin",
+	"strawberry-perl/c/bin",
 	};	
 	
 	fmt.Println(figlet("ENVIRONMENT"))
