@@ -1,7 +1,0 @@
-{
-    "Name"  :   "sdl-nightly",
-    "Zip"   :   "sdl-visualstudio-3238.zip",
-    "Url"   :   "https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio/sdl-visualstudio-3238.zip",
-	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory"
-}
