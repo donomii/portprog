@@ -45,6 +45,7 @@ Delete the directory.  Portprog does not modify any part of your system outside 
 
 ## Warning
 
-I can't control other programs and libraries, so when you use a program or library that portprog downloads for you, this third party might change your system.  
-I can't stop that, but I try not to use any programs that would do that.
+When you use a program or library that portprog downloads for you, it might change your system.  
+
+I can't stop that, but I do try to not use any programs that would do that.
 
