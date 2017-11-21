@@ -1,6 +1,6 @@
 # The Portable Programmer
 
-Interpreters and libraries for the programmer on the move
+Languagaes and libraries for the programmer on the move
 
 # [Download](https://github.com/donomii/portprog/releases)
 
@@ -13,17 +13,17 @@ I frequently have to install my programming tools on a fresh computer.  It is al
 
 # Install
 
-## Windows
+### Windows
 
 Download a new release from the [Releases page](https://github.com/donomii/portprog/releases).  Unpack it and double click the exe.
 
-## Linux and Mac
+### Linux and Mac
 
 Download a source release from the [Releases page](https://github.com/donomii/portprog/releases), then follow the [build instructions](https://github.com/donomii/portprog).
 	
 Or checkout the [latest code](https://github.com/donomii/portprog) from github.
 	
-## Options
+### Options
 
 	--no-gcc	Don't download or install gcc
 	--no-golang	Don't download or install golang
