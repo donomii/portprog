@@ -1,6 +1,6 @@
 # The Portable Programmer
 
-Languagaes and libraries for the programmer on the move
+Languages and libraries for the programmer on the move
 
 # [Download](https://github.com/donomii/portprog/releases)
 
