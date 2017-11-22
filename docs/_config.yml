@@ -2,3 +2,4 @@ theme: jekyll-theme-merlot
 title: PortProg
 description: "The Portable Programmer"
 show_downloads: true
+google_analytics: UA-63812845-2
