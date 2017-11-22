@@ -42,8 +42,9 @@ And also fetches the sources for
 * OpenAL
 * DCSS
 
-Don't see your favourit thing here?  Send me a pull request!
+Don't see your favourite thing here?  Send me a pull request!
 
+(Or paste it into a bug report, I don't mind so long as I get it)
 
 # Install
 
