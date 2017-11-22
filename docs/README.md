@@ -6,10 +6,44 @@ Languages and libraries for the programmer on the move
 
 [Download](https://github.com/donomii/portprog/releases) and double click to install GCC, Go, Perl, support libraries and much more!
 
-I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and
-  patch that I need to get something compiled.  
+# Background
+
+I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and patch that I need to get something compiled.  
   
-  So I put together this installer to get set up as quickly and easily as possible.
+So I made this installer to get myself set up as quickly and easily as possible.
+
+# Software list
+
+Portprog installs programming languages:
+
+* Gcc
+* Golang
+* Perl
+* Nim
+* IO
+* Lazarus
+* Neko
+* Squeak
+
+And editors
+
+* CodeBlocks
+* Notepad++
+
+And support utilities
+
+* Make
+* Cmake
+* Git
+
+And also fetches the sources for
+
+* SDL
+* OpenAL
+* DCSS
+
+Don't see your favourit thing here?  Send me a pull request!
+
 
 # Install
 
