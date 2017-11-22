@@ -29,6 +29,7 @@ And editors
 
 * CodeBlocks
 * Notepad++
+* LiteIDE
 
 And support utilities
 
