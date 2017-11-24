@@ -32,3 +32,5 @@ github.com/peterh/liner
 github.com/alecthomas/kingpin
 github.com/docopt/docopt.go
 github.com/spf13/cobra
+github.com/getlantern/systray
+github.com/andlabs/ui
