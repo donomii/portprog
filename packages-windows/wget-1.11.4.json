@@ -1,0 +1,8 @@
+{
+    "Name"  :   "wget",
+    "Zip"   :   "wget-1.11.4-1-bin.zip",
+    "Url"   :   "https://downloads.sourceforge.net/project/gnuwin32/wget/1.11.4-1/wget-1.11.4-1-bin.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application"
+}
