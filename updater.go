@@ -499,7 +499,7 @@ func main() {
 			os.Chdir(rootDir)
 
 			doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-15.3.7.7z"})
-			os.Chdir("components-14.1")
+			os.Chdir("components-15.3")
 			files, err := ioutil.ReadDir(".")
 			if err != nil {
 				log.Fatal(err)
@@ -515,7 +515,7 @@ func main() {
 
 		}
 	}
-	os.Setenv("PATH", fmt.Sprintf("%v/components-14.1/bin/;%v", rootDir, os.Getenv("PATH")))
+	os.Setenv("PATH", fmt.Sprintf("%v/components-15.3/bin/;%v", rootDir, os.Getenv("PATH")))
 
 	if !noGo {
 		fmt.Println(figlet("GO COMPILER"))
@@ -591,20 +591,30 @@ func main() {
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
 	fmt.Println("Windows:")
+	var text string
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
-		fmt.Printf("set PATH=%v\\%v;%%PATH%%\n", folderPath, winpath)
+		text = fmt.Sprintf("%sset PATH=%v\\%v;%%PATH%%\n", text, folderPath, winpath)
 	}	
+	fmt.Println(text)
+	ioutil.WriteFile("environment.bat", []byte(text), 0644)
+	text = ""
 	
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		fmt.Printf("set -x %v/%v $PATH\n", folderPath, v)
+		fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
 	}
+	fmt.Println(text)
+	ioutil.WriteFile("environment.fish", []byte(text), 0644)
+	text = ""
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Printf("export PATH=%v/%v:$PATH\n", folderPath, v)
+		fmt.Sprintf("%sexport PATH=%v/%v:$PATH\n",text, folderPath, v)
 	}
+	fmt.Println(text)
+	ioutil.WriteFile("environment.bash", []byte(text), 0644)
+	text = ""
 	
 	for  {
 		time.Sleep(1 * time.Second)
