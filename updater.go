@@ -18,6 +18,9 @@ import (
 )
 
 var installDir = "packs"
+var goExe = "packs/go/bin/go"
+var cpanExe = "packs/perl/bin/cpan"
+var gitExe = "packs/PortableGit-2.15.0"
 var noGcc = false
 var noGo = false
 var noGit = false
@@ -65,21 +68,29 @@ func doCommand(cmd string, args []string) {
 }
 
 func buildGithub(repo string) {
-	cmd := "go"
+	cmd := goExe
 	args := []string{"build", repo}
 	fmt.Printf("I> Building %v\n", repo)
 	doCommand(cmd, args)
 }
 
-func installGithub(repo string) {
-	cmd := "go"
+func installGoGithub(repo string) {
+	cmd := goExe
 	args := []string{"get", "-u", repo}
 	fmt.Printf("I> Installing %v\n", repo)
 	doCommand(cmd, args)
 }
 
+func installGithub(repo string) {
+
+	cmd := gitExe
+	args := []string{"clone", repo}
+	fmt.Printf("I> Cloning %v\n", repo)
+	doCommand(cmd, args)
+}
+
 func installCpan(repo string) {
-	cmd := "cpan"
+	cmd := cpanExe
 	args := []string{repo}
 	fmt.Printf("I> Installing %v\n", repo)
 	doCommand(cmd, args)
@@ -548,7 +559,7 @@ func main() {
 		figSay("CPAN")
 		working++
 		go func () {
-			repos = loadRepos("cpan.txt")
+			repos = loadRepos("packages-other/cpan")
 			for _, v := range repos {
 				v = strings.Replace(v, "\r", "", -1)
 				installCpan(v)
@@ -558,19 +569,29 @@ func main() {
 	
 	if !noGit {
 		figSay("LIBRARIES")
-		repos = loadRepos("libs")
+		repos = loadRepos("packages-other/go_libs")
 		for _, v := range repos {
 			v = strings.Replace(v, "\r", "", -1)
-			installGithub(v)
+			installGoGithub(v)
 		}
 
 		figSay("APPLICATIONS")
-		repos = loadRepos("apps")
+		repos = loadRepos("packages-other/go_apps")
+		for _, v := range repos {
+			v = strings.Replace(v, "\r", "", -1)
+			installGoGithub(v)
+		}
+		
+		figSay("GITHUB")
+		repos = loadRepos("packages-other/github")
+		os.Mkdir("git", 0777)
+		os.Chdir(fmt.Sprintf("%v/git", folderPath))
+	
 		for _, v := range repos {
 			v = strings.Replace(v, "\r", "", -1)
 			installGithub(v)
 		}
-		
+		os.Chdir(folderPath)
 
 		
 	}
