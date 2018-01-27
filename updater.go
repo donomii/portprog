@@ -592,13 +592,12 @@ func main() {
 			installGithub(v)
 		}
 		os.Chdir(folderPath)
-
-		
 	}
 	
 
 	subPaths := []string{
 	"packs/PortableGit-2.15.0/bin",
+	"packs/PortableGit-2.15.0/usr/bin",
 	"packs/go/bin",
 	"7zip",
 	"packs/components-15.3.7/bin",
