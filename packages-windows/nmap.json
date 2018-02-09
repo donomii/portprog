@@ -1,0 +1,9 @@
+{
+    "Name"  :   "nmap",
+    "Zip"   :   "nmap-7.60-win32.zip",
+    "Url"   :   "https://nmap.org/dist/nmap-7.60-win32.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	""
+}
