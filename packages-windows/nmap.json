@@ -5,5 +5,5 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	""
+	"BinDir":	"/"
 }
