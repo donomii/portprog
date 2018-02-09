@@ -17,13 +17,28 @@ import (
 	"net/http"
 )
 
+
+
+
 var installDir = "packs"
 var goExe = "packs/go/bin/go"
-var cpanExe = "packs/perl/bin/cpan"
+var cpanExe = "packs/strawberry-perl/perl/bin/cpan"
 var gitExe = "packs/PortableGit-2.15.0"
 var noGcc = false
 var noGo = false
 var noGit = false
+
+var subPaths []string = []string{
+	"packs/PortableGit-2.15.0/bin",
+	"packs/PortableGit-2.15.0/usr/bin",
+	"packs/go/bin",
+	"7zip",
+	"packs/components-15.3.7/bin",
+	"packs/strawberry/perl/site/bin",
+	"packs/strawberry-perl/perl/bin",
+	"packs/strawberry-perl/c/bin",
+	"langlibs/gopath/bin",
+	};
 
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
@@ -400,7 +415,10 @@ func doAll(p Package, b Config) {
 	} else {
 		log.Println("Unknown plan: ", plan)
 	}
-	
+
+	if p.BinDir != "" {
+		subPaths = append(subPaths, b.InstallDir + "/" + p.Name + "/" + p.BinDir)
+	}
 }
 
 func figSay(s string) {
@@ -550,7 +568,7 @@ func main() {
 	}
 
 	processDir(b, "packages-windows")
-	//processDir(b, "packages")
+	//FIXME processDir(b, "packages") 
 
 	
 
@@ -595,17 +613,6 @@ func main() {
 	}
 	
 
-	subPaths := []string{
-	"packs/PortableGit-2.15.0/bin",
-	"packs/PortableGit-2.15.0/usr/bin",
-	"packs/go/bin",
-	"7zip",
-	"packs/components-15.3.7/bin",
-	"packs/strawberry/perl/site/bin",
-	"packs/strawberry-perl/perl/bin",
-	"packs/strawberry-perl/c/bin",
-	"langlibs/gopath/bin",
-	};	
 	
 	fmt.Println(figlet("ENVIRONMENT"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
