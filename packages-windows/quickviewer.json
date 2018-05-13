@@ -1,0 +1,8 @@
+{
+    "Name"  :   "QuickViewer 1.1.0 x86",
+    "Zip"   :   "QuickViewer-1.1.0-x86.zip",
+    "Url"   :   "https://github.com/kanryu/quickviewer/releases/download/v1.1.0/QuickViewer-1.1.0-x86.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application"
+}

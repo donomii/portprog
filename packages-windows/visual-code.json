@@ -1,0 +1,8 @@
+{
+    "Name"  :   "Visual Studio Code 1.20.1",
+    "Zip"   :   "VSCode-win32-x64-1.20.1.zip",
+    "Url"   :   "https://az764295.vo.msecnd.net/stable/f88bbf9137d24d36d968ea6b2911786bfe103002/VSCode-win32-x64-1.20.1.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application"
+}
