@@ -1,0 +1,8 @@
+{
+    "Name"  :   "curl",
+    "Zip"   :   "curl-7.60.0-win64-mingw.zip",
+    "Url"   :   "https://bintray.com/artifact/download/vszakats/generic/curl-7.60.0-win64-mingw.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application"
+}
