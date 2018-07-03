@@ -349,7 +349,12 @@ func zipWithDirectory(b Config, p Package) {
 func msi(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v", b.InstallDir) 
 	fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
-	doCommand("msiexec.exe", []string{"/i", zipFilePath(b, p.Zip), fmt.Sprintf("INSTALLLOCATION=\"%v\"", targetDir), "/qb" })
+	args := []string{"/i", zipFilePath(b, p.Zip), fmt.Sprintf("INSTALLLOCATION=\"%v\"",targetDir),
+	fmt.Sprintf("INSTALLDIR=\"%v\"",targetDir),
+	fmt.Sprintf("TARGETDIR=\"%v\"",targetDir),
+	 "/q", "/lv", "log.txt" }
+	 doCommand("msiexec.exe", args)
+	 os.Exit(1)
 }
 
 
