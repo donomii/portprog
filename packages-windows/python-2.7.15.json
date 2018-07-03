@@ -1,0 +1,9 @@
+{
+    "Name"  :   "python-2.7.15",
+    "Zip"   :   "python-2.7.15.amd64.msi",
+    "Url"   :   "https://www.python.org/ftp/python/2.7.15/python-2.7.15.amd64.msi",
+	"Fetch" :	"web",
+    "Plan"  :   "msi",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}

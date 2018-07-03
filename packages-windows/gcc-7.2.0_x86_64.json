@@ -1,0 +1,8 @@
+{
+    "Name"  :   "gcc7.2.0_x86_64",
+    "Zip"   :   "gcc7.2.0_x86_64-w64-mingw32.7z",
+    "Url"   :   "http://www.bawt.tcl3d.org/download/Bootstrap-Windows/gcc7.2.0_x86_64-w64-mingw32.7z",
+	"Fetch" :	"web",
+    "Plan"  :   "ZipWithDirectory",
+	"Type"  :   "Application"
+}

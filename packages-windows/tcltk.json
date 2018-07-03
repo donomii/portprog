@@ -1,0 +1,8 @@
+{
+    "Name"  :   "tcltk86-8.6.8-5",
+    "Zip"   :   "tcltk86-8.6.8-5.tcl86.Win7.x86_64.tgz",
+    "Url"   :   "https://bitbucket.org/tombert/tcltk/downloads/tcltk86-8.6.8-5.tcl86.Win7.x86_64.tgz",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "Application"
+}
