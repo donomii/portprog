@@ -1,0 +1,9 @@
+{
+    "Name"  :   "apache-maven-3.5.4",
+    "Zip"   :   "apache-maven-3.5.4-bin.zip",
+    "Url"   :   "http://ftp.heanet.ie/mirrors/www.apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}

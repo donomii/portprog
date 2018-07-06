@@ -1,0 +1,9 @@
+{
+    "Name"  :   "python",
+    "Zip"   :   "python-3.7.0b1-embed-win32.zip",
+    "Url"   :   "https://www.python.org/ftp/python/3.7.0/python-3.7.0b1-embed-win32.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
