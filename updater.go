@@ -292,8 +292,6 @@ func unSevenZ(b Config, file string) {
 	doCommand(b.SzPath, []string{"x", file, "-aoa" })
 }
 
-
-
 /*
 func unzipWithPathMake(zipName) {
 	cwd, _ := os.Getwd()
@@ -344,19 +342,6 @@ func zipWithDirectory(b Config, p Package) {
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
 }
-
-
-func msi(b Config, p Package) {
-	targetDir := fmt.Sprintf("%v", b.InstallDir) 
-	fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
-	args := []string{"/i", zipFilePath(b, p.Zip), fmt.Sprintf("INSTALLLOCATION=\"%v\"",targetDir),
-	fmt.Sprintf("INSTALLDIR=\"%v\"",targetDir),
-	fmt.Sprintf("TARGETDIR=\"%v\"",targetDir),
-	 "/q", "/lv", "log.txt" }
-	 doCommand("msiexec.exe", args)
-	 os.Exit(1)
-}
-
 
 func zipWithNoDirectory(b Config, p Package) {
 	cwd, _ := os.Getwd()
@@ -425,8 +410,6 @@ func doAll(p Package, b Config) {
 		zipWithNoDirectory(b, p)
 	} else if plan == "zipWithDirectory" {
 		zipWithDirectory(b, p)
-	} else if plan == "msi" {
-		msi(b, p)
 	} else if plan == "customCommand" {
 		//customCommand(b, p)
 	} else {
