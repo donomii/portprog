@@ -1,0 +1,9 @@
+{
+    "Name"  :   "atom",
+    "Zip"   :   "atom-windows.zip",
+    "Url"   :   "https://github.com/atom/atom/releases/download/v1.28.0/atom-windows.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}

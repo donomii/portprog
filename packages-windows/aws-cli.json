@@ -1,0 +1,9 @@
+{
+    "Name"  :   "aws-cli",
+    "Zip"   :   "AWSCLI32.msi",
+    "Url"   :   "https://s3.amazonaws.com/aws-cli/AWSCLI32.msi",
+	"Fetch" :	"web",
+    "Plan"  :   "msi",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}

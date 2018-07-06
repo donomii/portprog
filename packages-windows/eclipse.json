@@ -1,0 +1,9 @@
+{
+    "Name"  :   "eclipse-java-photon-R-win32-x86_64",
+    "Zip"   :   "eclipse-java-photon-R-win32-x86_64.zip",
+    "Url"   :   "http://ftp.fau.de/eclipse/technology/epp/downloads/release/photon/R/eclipse-java-photon-R-win32-x86_64.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}

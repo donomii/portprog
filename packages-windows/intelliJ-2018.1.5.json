@@ -1,0 +1,9 @@
+{
+    "Name"  :   "ideaIU-2018.1.5",
+    "Zip"   :   "ideaIU-2018.1.5.win.zip",
+    "Url"   :   "https://download.jetbrains.com/idea/ideaIU-2018.1.5.win.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}
