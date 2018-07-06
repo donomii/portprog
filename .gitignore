@@ -7,3 +7,5 @@ fakeRoot
 environment.bat
 environment.bash
 environment.fish
+log.txt
+portprog.exe
