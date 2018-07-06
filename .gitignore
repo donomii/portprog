@@ -4,3 +4,6 @@ zips
 golangCompiler
 goFiles
 fakeRoot
+environment.bat
+environment.bash
+environment.fish
