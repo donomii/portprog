@@ -1,5 +1,6 @@
 package main
 
+import "sync"
 import "time"
 import "log"
 import "github.com/probandula/figlet4go"
@@ -20,6 +21,7 @@ import (
 
 
 
+var wg sync.WaitGroup
 var installDir = "packs"
 var goExe = "packs/go/bin/go"
 var cpanExe = "packs/strawberry-perl/perl/bin/cpan"
@@ -27,6 +29,7 @@ var gitExe = "packs/PortableGit-2.15.0"
 var noGcc = false
 var noGo = false
 var noGit = false
+var noInstall = false
 
 var subPaths []string = []string{
 	"packs/PortableGit-2.15.0/bin",
@@ -69,7 +72,11 @@ func downloadFile(filepath string, url string) (err error) {
 	return nil
 }
 
+
 func doCommand(cmd string, args []string) {
+	if noInstall {
+		return
+	}
 	fmt.Println("C>", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
 	if err != nil {
@@ -105,7 +112,7 @@ func installGithub(repo string) {
 }
 
 func installCpan(repo string) {
-	cmd := cpanExe
+	cmd := force_winpath(cpanExe)
 	args := []string{repo}
 	fmt.Printf("I> Installing %v\n", repo)
 	doCommand(cmd, args)
@@ -204,6 +211,7 @@ func unTar(b Config, zipPath string) {
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
 			unSevenZ(b, zipPath)
+			wg.Add(1)
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
@@ -222,6 +230,7 @@ func unTgzLib(b Config, zipPath string) {
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
 			unSevenZ(b, zipPath)
+			wg.Add(1)
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
@@ -235,6 +244,7 @@ func unBzLib(b Config, lib string) {
 	path := fmt.Sprintf("%v/%v.tar.bz2", b.ZipDir, lib)
 	if _, err := os.Stat(path); err == nil {
 		if isWindows() {
+			wg.Add(1)
 			unSevenZ(b, path)
 		} else {
 			doCommand("tar", []string{"-xjvf", path})
@@ -287,9 +297,36 @@ func buildGcc(b Config, path string) {
 	standardConfigureBuild(b, gccName, "gcc/objdir", []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
 }
 
+
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
-	doCommand(b.SzPath, []string{"x", file, "-aoa" })
+	wg.Add(1)
+	startpipe := make(chan int)
+if (false) {
+	go func() {
+		args := []string{b.SzPath, "x", file, "-aoa" }
+		log.Printf("Args: ", args)
+		os.StartProcess(b.SzPath, args, &os.ProcAttr{})
+		startpipe <- 1
+	}()
+	<- startpipe
+} 
+if (true) {
+		
+	go func() {
+		startpipe <- 1
+		doCommand(b.SzPath, []string{"x", file, "-aoa" })
+		
+	}()
+	<- startpipe
+	time.Sleep(1 * time.Second)
+
+}
+if (false) {
+		
+		doCommand(b.SzPath, []string{"x", file, "-aoa" })
+
+}
 }
 
 /*
@@ -338,6 +375,7 @@ func zipWithDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v", b.InstallDir) //Make an appsdir and install there?
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
+	wg.Add(1)
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -348,6 +386,7 @@ func zipWithNoDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
+	wg.Add(1)
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -387,6 +426,24 @@ func doGit(p Package, b Config) {
 	os.Chdir(cwd)
 }
 
+func force_winpath(str string) string{
+	winpath := strings.Replace(str, "/", "\\", -1)
+	return winpath
+}
+
+func msi(b Config, p Package) {
+       targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
+       fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
+       // we can use /i to do full installs including registry updates, but that requires the user to click things
+       // prefer /a because it just dumps the files in the directory, and most open source programs don't actually
+       // use the registry
+       args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=\"%v\"",force_winpath(targetDir)),
+       fmt.Sprintf("INSTALLDIR=\"%v\"",force_winpath(targetDir)),
+       fmt.Sprintf("TARGETDIR=\"%v\"",force_winpath(targetDir)),
+        "/q", "/lv", "log.txt" }
+        doCommand("msiexec.exe", args)
+}
+
 func doAll(p Package, b Config) {
 	figSay(p.Name)
 	targetDir := b.InstallDir
@@ -410,6 +467,8 @@ func doAll(p Package, b Config) {
 		zipWithNoDirectory(b, p)
 	} else if plan == "zipWithDirectory" {
 		zipWithDirectory(b, p)
+	} else if plan == "msi" {
+		msi(b, p)
 	} else if plan == "customCommand" {
 		//customCommand(b, p)
 	} else {
@@ -460,6 +519,7 @@ func main() {
 	flag.BoolVar(&noGcc, "no-gcc", false, "Don't install gcc locally")
 	flag.BoolVar(&noGo, "no-golang", false, "Don't install the Go compiler")
 	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
+	flag.BoolVar(&noInstall, "no-install", false, "Don't install anything")
 	
 	flag.Parse()
 	printEnv()
@@ -536,6 +596,7 @@ func main() {
 
 			for _, file := range files {
 				if strings.HasSuffix(file.Name(), "7z") {
+					wg.Add(1)
 					unSevenZ(b, file.Name())
 				}
 			}
@@ -647,6 +708,7 @@ func main() {
 	for  {
 		time.Sleep(1 * time.Second)
 	}
+	wg.Wait()
 	
 	fmt.Printf("Job's a good'un, boss\n")
 }
