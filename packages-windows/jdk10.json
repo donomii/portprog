@@ -1,0 +1,9 @@
+{
+    "Name"  :   "zulu10.2+3-jdk10.0.1-win_x64",
+    "Zip"   :   "zulu10.2+3-jdk10.0.1-win_x64.zip",
+    "Url"   :   "https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-win_x64.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}

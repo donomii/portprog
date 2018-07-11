@@ -1,0 +1,9 @@
+{
+    "Name"  :   "zulu9.0.7.1-jdk9.0.7-win_i686",
+    "Zip"   :   "zulu9.0.7.1-jdk9.0.7-win_i686.zip",
+    "Url"   :   "https://cdn.azul.com/zulu/bin/zulu9.0.7.1-jdk9.0.7-win_i686.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}
