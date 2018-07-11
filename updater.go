@@ -43,6 +43,7 @@ var subPaths []string = []string{
 	"langlibs/gopath/bin",
 	};
 
+
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
@@ -530,6 +531,11 @@ func main() {
 		os.Exit(1)
 	}
 	
+	//Update the predefined paths from relative to absolute
+		for i, v := range subPaths {
+		subPaths[i] = fmt.Sprintf("%v/%v", folderPath, v	)
+	}
+	
 	langlibs := fmt.Sprintf("%v/langlibs", folderPath)
 	gopathDir := fmt.Sprintf("%v/gopath", langlibs)
 	cpanDir := fmt.Sprintf("%v/cpan", langlibs)
@@ -682,7 +688,7 @@ func main() {
 	var text string
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
-		text = fmt.Sprintf("%sset PATH=%v\\%v;%%PATH%%\n", text, folderPath, winpath)
+		text = fmt.Sprintf("%sset PATH=%v;%%PATH%%\n", text, winpath)
 	}	
 	text = text + "\nstart cmd /k cmd"
 	fmt.Println(text)
