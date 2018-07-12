@@ -22,24 +22,24 @@ import (
 
 
 var wg sync.WaitGroup
-var installDir = "packs"
-var goExe = "packs/go/bin/go"
-var cpanExe = "packs/strawberry-perl/perl/bin/cpan"
-var gitExe = "packs/PortableGit-2.15.0"
+var installDir = "installs"
+var goExe = "installs/go/bin/go"
+var cpanExe = "installs/strawberry-perl/perl/bin/cpan"
+var gitExe = "installs/PortableGit-2.15.0"
 var noGcc = false
 var noGo = false
 var noGit = false
 var noInstall = false
 
 var subPaths []string = []string{
-	"packs/PortableGit-2.15.0/bin",
-	"packs/PortableGit-2.15.0/usr/bin",
-	"packs/go/bin",
+	"installs/PortableGit-2.15.0/bin",
+	"installs/PortableGit-2.15.0/usr/bin",
+	"installs/go/bin",
 	"7zip",
-	"packs/components-15.3.7/bin",
-	"packs/strawberry/perl/site/bin",
-	"packs/strawberry-perl/perl/bin",
-	"packs/strawberry-perl/c/bin",
+	"installs/components-15.3.7/bin",
+	"installs/strawberry/perl/site/bin",
+	"installs/strawberry-perl/perl/bin",
+	"installs/strawberry-perl/c/bin",
 	"langlibs/gopath/bin",
 	};
 
@@ -205,14 +205,16 @@ func makeOpt(optName, optVal string) string {
 
 func unTar(b Config, zipPath string) {
 	p2 := strings.Replace(zipPath, ".gz", "", -1)
+	p2 = strings.Replace(zipPath, ".tgz", ".tar", -1)
 	p2 = strings.Replace(p2, ".lzma", "", -1)
 	p2 = strings.Replace(p2, ".bz2", "", -1)
 	splits := strings.Split(p2, "/")
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
+		
 			unSevenZ(b, zipPath)
-			wg.Add(1)
+			
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
@@ -231,7 +233,7 @@ func unTgzLib(b Config, zipPath string) {
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
 			unSevenZ(b, zipPath)
-			wg.Add(1)
+			
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
@@ -245,7 +247,7 @@ func unBzLib(b Config, lib string) {
 	path := fmt.Sprintf("%v/%v.tar.bz2", b.ZipDir, lib)
 	if _, err := os.Stat(path); err == nil {
 		if isWindows() {
-			wg.Add(1)
+			
 			unSevenZ(b, path)
 		} else {
 			doCommand("tar", []string{"-xjvf", path})
@@ -302,6 +304,7 @@ func buildGcc(b Config, path string) {
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
 	wg.Add(1)
+	
 	startpipe := make(chan int)
 if (false) {
 	go func() {
@@ -309,13 +312,15 @@ if (false) {
 		log.Printf("Args: ", args)
 		os.StartProcess(b.SzPath, args, &os.ProcAttr{})
 		startpipe <- 1
+		//FIXME start another thread to monitor the unzip and call wg.Done when it finishes
 	}()
 	<- startpipe
 } 
 if (true) {
 		
 	go func() {
-		startpipe <- 1
+	defer wg.Done()
+		startpipe <- 1  //Go functions can take a few seconds to be scheduled
 		doCommand(b.SzPath, []string{"x", file, "-aoa" })
 		
 	}()
@@ -324,7 +329,7 @@ if (true) {
 
 }
 if (false) {
-		
+defer wg.Done()		
 		doCommand(b.SzPath, []string{"x", file, "-aoa" })
 
 }
@@ -376,7 +381,7 @@ func zipWithDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v", b.InstallDir) //Make an appsdir and install there?
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
-	wg.Add(1)
+	
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -387,7 +392,7 @@ func zipWithNoDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
-	wg.Add(1)
+	
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -602,7 +607,7 @@ func main() {
 
 			for _, file := range files {
 				if strings.HasSuffix(file.Name(), "7z") {
-					wg.Add(1)
+					
 					unSevenZ(b, file.Name())
 				}
 			}
@@ -714,7 +719,7 @@ func main() {
 	for  {
 		time.Sleep(1 * time.Second)
 	}
-	wg.Wait()
+	
 	
 	fmt.Printf("Job's a good'un, boss\n")
 }
