@@ -5,5 +5,5 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	"/Atom"
 }

@@ -4,5 +4,6 @@
     "Url"   :   "https://www.sqlite.org/2018/sqlite-tools-win32-x86-3230100.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	"Type"  :   "application"
+	"Type"  :   "application",
+	"BinDir":	"/"
 }

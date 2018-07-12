@@ -4,5 +4,6 @@
     "Url"   :   "http://files.squeak.org/5.1/Squeak5.1-16549-32bit/Squeak5.1-16549-32bit-201608171728-Windows.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	"Type"  :   "Application"
+	"Type"  :   "Application",
+	"BinDir":	"/"
 }

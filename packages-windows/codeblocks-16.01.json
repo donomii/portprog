@@ -4,5 +4,6 @@
     "Url"   :   "https://sourceforge.net/projects/codeblocks/files/Binaries/16.01/Windows/codeblocks-16.01-nosetup.zip/download",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application"
+	"Type"  :   "Application",
+	"BinDir":	"/"
 }

@@ -3,6 +3,7 @@
     "Zip"   :   "neko-2.1.0-win.zip",
     "Url"   :   "http://nekovm.org/media/neko-2.1.0-win.zip",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "application"
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
 }
