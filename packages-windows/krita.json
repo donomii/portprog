@@ -1,0 +1,9 @@
+{
+    "Name"  :   "krita-x86-4.1.0",
+    "Zip"   :   "krita-x86-4.1.0.zip",
+    "Url"   :   "https://download.kde.org/stable/krita/4.1.0/krita-x86-4.1.0.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "Application",
+	"BinDir":	"/bin"
+}

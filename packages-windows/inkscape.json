@@ -1,0 +1,9 @@
+{
+    "Name"  :   "inkscape-0.92.3-x86",
+    "Zip"   :   "inkscape-0.92.3-x86.7z",
+    "Url"   :   "https://inkscape.org/en/gallery/item/12191/inkscape-0.92.3-x86.7z",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "Application",
+	"BinDir":	"/"
+}

@@ -1,0 +1,9 @@
+{
+    "Name"  :   "gimphoto-24.1",
+    "Zip"   :   "gimphoto-24.1.zip",
+    "Url"   :   "http://sourceforge.net/projects/gimphoto/files/Gimphoto_24.1/gimphoto-24.1.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "Application",
+	"BinDir":	"/bin"
+}
