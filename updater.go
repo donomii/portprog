@@ -30,6 +30,7 @@ var noGcc = false
 var noGo = false
 var noGit = false
 var noInstall = false
+var develMode = false
 
 var subPaths []string = []string{
 	"installs/PortableGit-2.15.0/bin",
@@ -526,6 +527,7 @@ func main() {
 	flag.BoolVar(&noGo, "no-golang", false, "Don't install the Go compiler")
 	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
 	flag.BoolVar(&noInstall, "no-install", false, "Don't install anything")
+	flag.BoolVar(&develMode, "devel", false, "Only process packages-develop directory")
 	
 	flag.Parse()
 	printEnv()
@@ -558,6 +560,7 @@ func main() {
 	os.Mkdir(rootDir, os.ModeDir|0777)
 	os.Mkdir(SzDir, os.ModeDir|0777)
 	os.Mkdir(srcDir, os.ModeDir|0777)
+	os.Mkdir("packages-develop", os.ModeDir|0777)
 	fmt.Println("I> Creating ", goDir)
 	os.Mkdir(goDir, os.ModeDir|0777)
 	os.Setenv("GOPATH", gopathDir)
@@ -638,14 +641,19 @@ func main() {
 		}
 		printEnv()
 	}
-
-	processDir(b, "packages-windows")
-	//FIXME processDir(b, "packages") 
-
+       if develMode {
+               processDir(b, "packages-develop")
+       } else {
+               if isWindows() {
+                       processDir(b, "packages-windows")
+               } else {
+                       processDir(b, "packages")
+               }
+       }
 	
 
 		var repos []string
-	
+	if ! develMode {
 		figSay("CPAN")
 		working++
 		go func () {
@@ -656,7 +664,9 @@ func main() {
 			}
 			working--
 		}()
+	}
 	
+	if ! develMode {
 	if !noGit {
 		figSay("LIBRARIES")
 		repos = loadRepos("packages-other/go_libs")
@@ -683,6 +693,7 @@ func main() {
 		}
 		os.Chdir(folderPath)
 	}
+	}	
 	
 
 	
