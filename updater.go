@@ -317,7 +317,7 @@ if (false) {
 	}()
 	<- startpipe
 } 
-if (true) {
+if (!noInstall) {
 		
 	go func() {
 	defer wg.Done()
@@ -444,9 +444,9 @@ func msi(b Config, p Package) {
        // we can use /i to do full installs including registry updates, but that requires the user to click things
        // prefer /a because it just dumps the files in the directory, and most open source programs don't actually
        // use the registry
-       args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=\"%v\"",force_winpath(targetDir)),
-       fmt.Sprintf("INSTALLDIR=\"%v\"",force_winpath(targetDir)),
-       fmt.Sprintf("TARGETDIR=\"%v\"",force_winpath(targetDir)),
+       args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=%v",force_winpath(targetDir)),
+       fmt.Sprintf("INSTALLDIR=%v",force_winpath(targetDir)),
+       fmt.Sprintf("TARGETDIR=%v",force_winpath(targetDir)),
         "/q", "/lv", "log.txt" }
         doCommand("msiexec.exe", args)
 }
