@@ -1,0 +1,9 @@
+{
+    "Name"  :   "go",
+    "Zip"   :   "go1.10.3.windows-amd64.zip",
+    "Url"   :   "https://storage.googleapis.com/golang/go1.10.3.windows-amd64.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}

@@ -1,0 +1,9 @@
+{
+    "Name"  :   "LibreOffice_6.0.5_Win_x86",
+    "Zip"   :   "LibreOffice_6.0.5_Win_x86.msi",
+    "Url"   :   "https://download.documentfoundation.org/libreoffice/stable/6.0.5/win/x86/LibreOffice_6.0.5_Win_x86.msi",
+	"Fetch" :	"web",
+    "Plan"  :   "msi",
+	"Type"  :   "application",
+	"BinDir":	"/bin"
+}
