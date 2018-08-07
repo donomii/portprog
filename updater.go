@@ -519,7 +519,10 @@ func processDir(b Config, d string) {
 
 func isWindows() bool {
 	return runtime.GOOS == "windows"
+}
 
+func isOSX() bool {
+	return runtime.GOOS == "darwin"
 }
 
 func main() {
@@ -648,6 +651,9 @@ func main() {
                        processDir(b, "packages-windows")
                } else {
                        processDir(b, "packages")
+			if isOSX() {
+			       processDir(b, "packages-osx")
+			}
                }
        }
 	
@@ -713,7 +719,7 @@ func main() {
 	
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
+		text = fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.fish", []byte(text), 0644)
@@ -721,7 +727,7 @@ func main() {
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Sprintf("%sexport PATH=%v/%v:$PATH\n",text, folderPath, v)
+		text = fmt.Sprintf("%sexport PATH=%v:$PATH\n",text, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.bash", []byte(text), 0644)
