@@ -1,0 +1,9 @@
+{
+    "Name"  :   "Mark Text",
+    "Zip"   :   "marktext-0.12.25.dmg",
+    "Url"   :   "https://github.com/marktext/marktext/releases/download/v0.12.25/marktext-0.12.25.dmg",
+	"Fetch" :	"web",
+    "Plan"  :   "dmg",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
