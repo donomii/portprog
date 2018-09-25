@@ -93,6 +93,11 @@ func doCommand(cmd string, args []string) string {
     return string(out)
 }
 
+func copyFile(source, target string) {
+    doCommand("/bin/cp", []string{"-r", source, target})
+}
+
+
 //Takes a path to a dmg file, mounts it, then return the mount point and device path
 func attachDMG(path string) (string, string){
     results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
@@ -476,6 +481,7 @@ func dmg(b Config, p Package) {
        fmt.Println("I> installing ",zipFilePath(b, p.Zip), " to ", targetDir)
        mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
        fmt.Println("I> Mounted DMG on ", mountpoint)
+       copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
        detachDMG(device)
 }
 
