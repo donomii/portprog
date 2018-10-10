@@ -1,0 +1,9 @@
+{
+    "Name"  :   "graphviz-2.38",
+    "Zip"   :   "graphviz-2.38.zip",
+    "Url"   :   "https://graphviz.gitlab.io/_pages/Download/windows/graphviz-2.38.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/release/bin"
+}
