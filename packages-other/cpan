@@ -1,5 +1,5 @@
+Digest::SHA
 Log::Log4Perl
-DBI
 JSON
 LWP::UserAgent
 DateTime
@@ -20,10 +20,8 @@ HTTP::Response
 DBIx::Class::ResultSet
 Log::Log4perl
 App::Netdisco
-DBI
 WWW::YouTube::Download
 Mojolicious
-DateTime
 Task::Kensho
 LWP::UserAgent
 Test::More
