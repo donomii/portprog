@@ -1,5 +1,6 @@
 package main
 
+import "regexp"
 import "sync"
 import "time"
 import "log"
@@ -75,9 +76,9 @@ func downloadFile(filepath string, url string) (err error) {
 }
 
 
-func doCommand(cmd string, args []string) {
+func doCommand(cmd string, args []string) string {
 	if noInstall {
-		return
+		return ""
 	}
 	fmt.Println("C>", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
@@ -89,6 +90,30 @@ func doCommand(cmd string, args []string) {
 	if string(out) != "" {
 		fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
 	}
+    return string(out)
+}
+
+func copyFile(source, target string) {
+    doCommand("/bin/cp", []string{"-r", source, target})
+}
+
+
+//Takes a path to a dmg file, mounts it, then return the mount point and device path
+func attachDMG(path string) (string, string){
+    results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
+    r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
+    b := r.FindStringSubmatch(results)
+    s := regexp.MustCompile(`\s+`)
+    bits := s.Split(b[0], 3)
+    //fmt.Println(bits)
+    device := string(bits[0])
+    mountpoint := string(bits[2])
+    fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
+    return mountpoint, device
+}
+
+func detachDMG(device string) {
+    doCommand("/usr/bin/hdiutil", []string{"detach", device})
 }
 
 func buildGithub(repo string) {
@@ -451,6 +476,15 @@ func msi(b Config, p Package) {
         doCommand("msiexec.exe", args)
 }
 
+func dmg(b Config, p Package) {
+       targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
+       fmt.Println("I> installing ",zipFilePath(b, p.Zip), " to ", targetDir)
+       mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
+       fmt.Println("I> Mounted DMG on ", mountpoint)
+       copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
+       detachDMG(device)
+}
+
 func doAll(p Package, b Config) {
 	figSay(p.Name)
 	targetDir := b.InstallDir
@@ -476,6 +510,8 @@ func doAll(p Package, b Config) {
 		zipWithDirectory(b, p)
 	} else if plan == "msi" {
 		msi(b, p)
+	} else if plan == "dmg" {
+		dmg(b, p)
 	} else if plan == "customCommand" {
 		//customCommand(b, p)
 	} else {
@@ -519,7 +555,10 @@ func processDir(b Config, d string) {
 
 func isWindows() bool {
 	return runtime.GOOS == "windows"
+}
 
+func isOSX() bool {
+	return runtime.GOOS == "darwin"
 }
 
 func main() {
@@ -648,6 +687,9 @@ func main() {
                        processDir(b, "packages-windows")
                } else {
                        processDir(b, "packages")
+			if isOSX() {
+			       processDir(b, "packages-osx")
+			}
                }
        }
 	
@@ -713,7 +755,7 @@ func main() {
 	
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
+		text = fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.fish", []byte(text), 0644)
@@ -721,7 +763,7 @@ func main() {
 	
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		fmt.Sprintf("%sexport PATH=%v/%v:$PATH\n",text, folderPath, v)
+		text = fmt.Sprintf("%sexport PATH=%v:$PATH\n",text, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.bash", []byte(text), 0644)

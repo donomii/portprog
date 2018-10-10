@@ -1,0 +1,9 @@
+{
+    "Name"  :   "CotEditor",
+    "Zip"   :   "CotEditor_3.6.0-beta.3.dmg",
+    "Url"   :   "https://github.com/coteditor/CotEditor/releases/download/3.6.0-beta.3/CotEditor_3.6.0-beta.3.dmg",
+	"Fetch" :	"web",
+    "Plan"  :   "dmg",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
