@@ -11,6 +11,7 @@ type Package struct {
 	Name, Zip, Url, Fetch, Plan string
 	Branch, Command             string // If this is git repository, what branch/tag do we check out before building?
 	BinDir, LibDir				string	//Where do we find the binary files, relative to the top level directory of the installed package?
+	BinDirs, Deletes []string
 }
 
 func LoadJSON(filename string) Package {

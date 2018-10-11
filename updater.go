@@ -521,6 +521,12 @@ func doAll(p Package, b Config) {
 	if p.BinDir != "" {
 		subPaths = append(subPaths, b.InstallDir + "/" + p.Name + "/" + p.BinDir)
 	}
+	for _, v := range p.BinDirs {
+		subPaths = append(subPaths, b.InstallDir + "/" + p.Name + "/" + v)
+	}
+	for _, v := range p.Deletes {
+		os.Remove(b.InstallDir + "/" + p.Name + "/" + v)
+	}
 }
 
 func figSay(s string) {
