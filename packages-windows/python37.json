@@ -1,0 +1,10 @@
+{
+    "Name"  :   "python-3.7",
+    "Zip"   :   "python-3.7.1rc1-embed-win32.zip",
+    "Url"   :   "https://www.python.org/ftp/python/3.7.1/python-3.7.1rc1-embed-win32.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDirs":	["/", "Scripts"],
+	"Deletes": ["python37._pth"]
+}
