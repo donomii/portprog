@@ -1,0 +1,9 @@
+{
+    "Name"  :   "cmake-3.12.3-win32-x86",
+    "Zip"   :   "cmake-3.12.3-win32-x86.zip",
+    "Url"   :   "https://cmake.org/files/v3.12/cmake-3.12.3-win32-x86.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDirs":	["/bin"]
+}
