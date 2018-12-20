@@ -38,8 +38,7 @@ or whatever.
 	
 ## Operation
 
-Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  On future runs, it will check the zips directory first, to avoid re-downloading files.
-
+Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
 ## Adding your own
 
 The whole purpose of this is to manage your own downloads.  You can easily add any download that you want:
