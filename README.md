@@ -12,7 +12,7 @@ I frequently have to install my programming tools on a fresh computer.
   patch that I need to get something compiled.
   
 Of course, there are no _minor_ libraries, because missing any of them halts my compile.  So
-I put together this installer to get my environment set up as quickly as possible.
+I put together this installer to get my build environment set up as quickly as possible.
 
 # Installation
 
