@@ -4,6 +4,8 @@ Programming languages and libraries for the programmer on the move.  [Read the w
 
 Double click to install GCC, Java, Perl, TclTk, Nim, Lazarus, Squeak Smalltalk, make, maven, Eclipse, IntelliJ, Codeblocks, Notepad++, and many supporting tools and libraries.
 
+After installation, run environment.bat to open a command shell with all your paths correctly set up.
+
 ## Easy setup
 
 I frequently have to install my programming tools on a fresh computer.
@@ -41,7 +43,7 @@ or whatever.
 Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
 ## Adding your own
 
-The whole purpose of this is to manage your own downloads.  You can easily add any download that you want:
+The gosl of PortProg is to manage your own downloads.  You can easily add any download that you want:
 
 *  Copy a json file from packages-windows to packages-devel
 *  Edit the file to add your download link and config options
