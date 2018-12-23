@@ -43,7 +43,7 @@ or whatever.
 Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
 ## Adding your own
 
-The gosl of PortProg is to manage your own downloads.  You can easily add any download that you want:
+The goal of PortProg is to manage your own downloads.  You can easily add any download that you want:
 
 *  Copy a json file from packages-windows to packages-devel
 *  Edit the file to add your download link and config options
