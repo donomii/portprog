@@ -19,9 +19,6 @@ import (
 	"net/http"
 )
 
-
-
-
 var wg sync.WaitGroup
 var installDir = "installs"
 var goExe = "installs/go/bin/go"
@@ -43,8 +40,7 @@ var subPaths []string = []string{
 	"installs/strawberry-perl/perl/bin",
 	"installs/strawberry-perl/c/bin",
 	"langlibs/gopath/bin",
-	};
-
+}
 
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
@@ -75,7 +71,6 @@ func downloadFile(filepath string, url string) (err error) {
 	return nil
 }
 
-
 func doCommand(cmd string, args []string) string {
 	if noInstall {
 		return ""
@@ -90,30 +85,29 @@ func doCommand(cmd string, args []string) string {
 	if string(out) != "" {
 		fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
 	}
-    return string(out)
+	return string(out)
 }
 
 func copyFile(source, target string) {
-    doCommand("/bin/cp", []string{"-r", source, target})
+	doCommand("/bin/cp", []string{"-r", source, target})
 }
 
-
 //Takes a path to a dmg file, mounts it, then return the mount point and device path
-func attachDMG(path string) (string, string){
-    results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
-    r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
-    b := r.FindStringSubmatch(results)
-    s := regexp.MustCompile(`\s+`)
-    bits := s.Split(b[0], 3)
-    //fmt.Println(bits)
-    device := string(bits[0])
-    mountpoint := string(bits[2])
-    fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
-    return mountpoint, device
+func attachDMG(path string) (string, string) {
+	results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
+	r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
+	b := r.FindStringSubmatch(results)
+	s := regexp.MustCompile(`\s+`)
+	bits := s.Split(b[0], 3)
+	//fmt.Println(bits)
+	device := string(bits[0])
+	mountpoint := string(bits[2])
+	fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
+	return mountpoint, device
 }
 
 func detachDMG(device string) {
-    doCommand("/usr/bin/hdiutil", []string{"detach", device})
+	doCommand("/usr/bin/hdiutil", []string{"detach", device})
 }
 
 func buildGithub(repo string) {
@@ -238,19 +232,18 @@ func unTar(b Config, zipPath string) {
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
-		
+
 			unSevenZ(b, zipPath)
-			
+
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 			doCommand("tar", []string{"-xjvf", zipPath})
 		}
 	} else {
-	log.Println("Could not find ", fname)
+		log.Println("Could not find ", fname)
 	}
 }
-
 
 func unTgzLib(b Config, zipPath string) {
 	p2 := strings.Replace(zipPath, ".gz", "", -1)
@@ -259,13 +252,13 @@ func unTgzLib(b Config, zipPath string) {
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
 			unSevenZ(b, zipPath)
-			
+
 			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 		}
 	} else {
-	log.Println("Could not extract ", fname)
+		log.Println("Could not extract ", fname)
 	}
 }
 
@@ -273,7 +266,7 @@ func unBzLib(b Config, lib string) {
 	path := fmt.Sprintf("%v/%v.tar.bz2", b.ZipDir, lib)
 	if _, err := os.Stat(path); err == nil {
 		if isWindows() {
-			
+
 			unSevenZ(b, path)
 		} else {
 			doCommand("tar", []string{"-xjvf", path})
@@ -326,39 +319,38 @@ func buildGcc(b Config, path string) {
 	standardConfigureBuild(b, gccName, "gcc/objdir", []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
 }
 
-
 func unSevenZ(b Config, file string) {
 	fmt.Println(b.SzPath, file)
 	wg.Add(1)
-	
+
 	startpipe := make(chan int)
-if (false) {
-	go func() {
-		args := []string{b.SzPath, "x", file, "-aoa" }
-		log.Printf("Args: ", args)
-		os.StartProcess(b.SzPath, args, &os.ProcAttr{})
-		startpipe <- 1
-		//FIXME start another thread to monitor the unzip and call wg.Done when it finishes
-	}()
-	<- startpipe
-} 
-if (!noInstall) {
-		
-	go func() {
-	defer wg.Done()
-		startpipe <- 1  //Go functions can take a few seconds to be scheduled
-		doCommand(b.SzPath, []string{"x", file, "-aoa" })
-		
-	}()
-	<- startpipe
-	time.Sleep(1 * time.Second)
+	if false {
+		go func() {
+			args := []string{b.SzPath, "x", file, "-aoa"}
+			log.Printf("Args: ", args)
+			os.StartProcess(b.SzPath, args, &os.ProcAttr{})
+			startpipe <- 1
+			//FIXME start another thread to monitor the unzip and call wg.Done when it finishes
+		}()
+		<-startpipe
+	}
+	if !noInstall {
 
-}
-if (false) {
-defer wg.Done()		
-		doCommand(b.SzPath, []string{"x", file, "-aoa" })
+		go func() {
+			defer wg.Done()
+			startpipe <- 1 //Go functions can take a few seconds to be scheduled
+			doCommand(b.SzPath, []string{"x", file, "-aoa"})
 
-}
+		}()
+		<-startpipe
+		time.Sleep(1 * time.Second)
+
+	}
+	if false {
+		defer wg.Done()
+		doCommand(b.SzPath, []string{"x", file, "-aoa"})
+
+	}
 }
 
 /*
@@ -383,7 +375,9 @@ func Make(b Config, p Package) {
 }
 
 func goGetAndMake(targetDir, name, goPath, url, p1 string) {
-	if noGit { return }
+	if noGit {
+		return
+	}
 	//p1 is the branch name
 	cwd, _ := os.Getwd()
 	doCommand("go", []string{"get", "-u", url})
@@ -407,7 +401,7 @@ func zipWithDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v", b.InstallDir) //Make an appsdir and install there?
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
-	
+
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -418,7 +412,7 @@ func zipWithNoDirectory(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
 	os.Mkdir(targetDir, os.ModeDir|0777)
 	os.Chdir(targetDir)
-	
+
 	unTar(b, zipFilePath(b, p.Zip))
 	unSevenZ(b, zipFilePath(b, p.Zip))
 	os.Chdir(cwd)
@@ -430,7 +424,9 @@ func doFetch(p Package, b Config) {
 		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
 	}
 	if fetch == "git" {
-		if noGit { return }
+		if noGit {
+			return
+		}
 		url := p.Url
 		branch := p.Branch
 		name := p.Name
@@ -458,31 +454,31 @@ func doGit(p Package, b Config) {
 	os.Chdir(cwd)
 }
 
-func force_winpath(str string) string{
+func force_winpath(str string) string {
 	winpath := strings.Replace(str, "/", "\\", -1)
 	return winpath
 }
 
 func msi(b Config, p Package) {
-       targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-       fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
-       // we can use /i to do full installs including registry updates, but that requires the user to click things
-       // prefer /a because it just dumps the files in the directory, and most open source programs don't actually
-       // use the registry
-       args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=%v",force_winpath(targetDir)),
-       fmt.Sprintf("INSTALLDIR=%v",force_winpath(targetDir)),
-       fmt.Sprintf("TARGETDIR=%v",force_winpath(targetDir)),
-        "/q", "/lv", "log.txt" }
-        doCommand("msiexec.exe", args)
+	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
+	fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
+	// we can use /i to do full installs including registry updates, but that requires the user to click things
+	// prefer /a because it just dumps the files in the directory, and most open source programs don't actually
+	// use the registry
+	args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=%v", force_winpath(targetDir)),
+		fmt.Sprintf("INSTALLDIR=%v", force_winpath(targetDir)),
+		fmt.Sprintf("TARGETDIR=%v", force_winpath(targetDir)),
+		"/q", "/lv", "log.txt"}
+	doCommand("msiexec.exe", args)
 }
 
 func dmg(b Config, p Package) {
-       targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-       fmt.Println("I> installing ",zipFilePath(b, p.Zip), " to ", targetDir)
-       mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
-       fmt.Println("I> Mounted DMG on ", mountpoint)
-       copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
-       detachDMG(device)
+	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
+	fmt.Println("I> installing ", zipFilePath(b, p.Zip), " to ", targetDir)
+	mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
+	fmt.Println("I> Mounted DMG on ", mountpoint)
+	copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
+	detachDMG(device)
 }
 
 func doAll(p Package, b Config) {
@@ -499,7 +495,7 @@ func doAll(p Package, b Config) {
 	plan := p.Plan
 	os.Chdir(cwd)
 	if plan == "standardConfigure" {
-		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir) 
+		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir)
 	} else if plan == "goGetAndMake" {
 		goGetAndMake(targetDir, p.Name, b.InstallDir, p.Url, p.Branch) //use zip field as goPath
 	} else if plan == "gitAndMake" {
@@ -519,10 +515,10 @@ func doAll(p Package, b Config) {
 	}
 
 	if p.BinDir != "" {
-		subPaths = append(subPaths, b.InstallDir + "/" + p.Name + "/" + p.BinDir)
+		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+p.BinDir)
 	}
 	for _, v := range p.BinDirs {
-		subPaths = append(subPaths, b.InstallDir + "/" + p.Name + "/" + v)
+		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+v)
 	}
 	for _, v := range p.Deletes {
 		os.Remove(b.InstallDir + "/" + p.Name + "/" + v)
@@ -543,20 +539,19 @@ func processDir(b Config, d string) {
 
 	for _, file := range files {
 		//working = working + 1
-		
+
 		fname := fmt.Sprintf("%v/%v", d, file.Name())
-		
+
 		if _, err := os.Stat(fname); os.IsNotExist(err) {
 			fname = fmt.Sprintf("%v\\%v", d, file.Name())
 		}
-		p := LoadJSON(fname)	
-		
+		p := LoadJSON(fname)
+
 		doAll(p, b)
 		//working--
-		
+
 	}
 
-	
 }
 
 func isWindows() bool {
@@ -573,7 +568,7 @@ func main() {
 	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
 	flag.BoolVar(&noInstall, "no-install", false, "Don't install anything")
 	flag.BoolVar(&develMode, "devel", false, "Only process packages-develop directory")
-	
+
 	flag.Parse()
 	printEnv()
 	figSay(runtime.GOOS)
@@ -582,12 +577,12 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	
+
 	//Update the predefined paths from relative to absolute
-		for i, v := range subPaths {
-		subPaths[i] = fmt.Sprintf("%v/%v", folderPath, v	)
+	for i, v := range subPaths {
+		subPaths[i] = fmt.Sprintf("%v/%v", folderPath, v)
 	}
-	
+
 	langlibs := fmt.Sprintf("%v/langlibs", folderPath)
 	gopathDir := fmt.Sprintf("%v/gopath", langlibs)
 	cpanDir := fmt.Sprintf("%v/cpan", langlibs)
@@ -636,7 +631,7 @@ func main() {
 	downloadFile("zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
 	downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
 	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
-	
+
 	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	figSay("GCC COMPILER")
 	//os.Exit(0)
@@ -655,7 +650,7 @@ func main() {
 
 			for _, file := range files {
 				if strings.HasSuffix(file.Name(), "7z") {
-					
+
 					unSevenZ(b, file.Name())
 				}
 			}
@@ -686,25 +681,24 @@ func main() {
 		}
 		printEnv()
 	}
-       if develMode {
-               processDir(b, "packages-develop")
-       } else {
-               if isWindows() {
-                       processDir(b, "packages-windows")
-               } else {
-                       processDir(b, "packages")
+	if develMode {
+		processDir(b, "packages-develop")
+	} else {
+		if isWindows() {
+			processDir(b, "packages-windows")
+		} else {
+			processDir(b, "packages")
 			if isOSX() {
-			       processDir(b, "packages-osx")
+				processDir(b, "packages-osx")
 			}
-               }
-       }
-	
+		}
+	}
 
-		var repos []string
-	if ! develMode {
+	var repos []string
+	if !develMode {
 		figSay("CPAN")
 		working++
-		go func () {
+		go func() {
 			repos = loadRepos("packages-other/cpan")
 			for _, v := range repos {
 				v = strings.Replace(v, "\r", "", -1)
@@ -713,76 +707,73 @@ func main() {
 			working--
 		}()
 	}
-	
-	if ! develMode {
-	if !noGit {
-		figSay("LIBRARIES")
-		repos = loadRepos("packages-other/go_libs")
-		for _, v := range repos {
-			v = strings.Replace(v, "\r", "", -1)
-			installGoGithub(v)
-		}
 
-		figSay("APPLICATIONS")
-		repos = loadRepos("packages-other/go_apps")
-		for _, v := range repos {
-			v = strings.Replace(v, "\r", "", -1)
-			installGoGithub(v)
+	if !develMode {
+		if !noGit {
+			figSay("LIBRARIES")
+			repos = loadRepos("packages-other/go_libs")
+			for _, v := range repos {
+				v = strings.Replace(v, "\r", "", -1)
+				installGoGithub(v)
+			}
+
+			figSay("APPLICATIONS")
+			repos = loadRepos("packages-other/go_apps")
+			for _, v := range repos {
+				v = strings.Replace(v, "\r", "", -1)
+				installGoGithub(v)
+			}
+
+			figSay("GITHUB")
+			repos = loadRepos("packages-other/github")
+			os.Mkdir("git", 0777)
+			os.Chdir(fmt.Sprintf("%v/git", folderPath))
+
+			for _, v := range repos {
+				v = strings.Replace(v, "\r", "", -1)
+				installGithub(v)
+			}
+			os.Chdir(folderPath)
 		}
-		
-		figSay("GITHUB")
-		repos = loadRepos("packages-other/github")
-		os.Mkdir("git", 0777)
-		os.Chdir(fmt.Sprintf("%v/git", folderPath))
-	
-		for _, v := range repos {
-			v = strings.Replace(v, "\r", "", -1)
-			installGithub(v)
-		}
-		os.Chdir(folderPath)
 	}
-	}	
-	
 
-	
 	fmt.Println(figlet("ENVIRONMENT"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
 	fmt.Println("Windows:")
-	var text string
+	var text string = fmt.Sprintf("set GOPATH=%v/go"/n, folderPath)
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
 		text = fmt.Sprintf("%sset PATH=%v;%%PATH%%\n", text, winpath)
-	}	
+	}
 	text = text + "\nstart cmd /k cmd"
 	fmt.Println(text)
 	ioutil.WriteFile("environment.bat", []byte(text), 0644)
 	text = ""
-	
+
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		text = fmt.Sprintf("%sset -x %v/%v $PATH\n",text, folderPath, v)
+		text = fmt.Sprintf("%sset -x %v/%v $PATH\n", text, folderPath, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.fish", []byte(text), 0644)
 	text = ""
-	
+
 	fmt.Println("Bash Shell")
 	for _, v := range subPaths {
-		text = fmt.Sprintf("%sexport PATH=%v:$PATH\n",text, v)
+		text = fmt.Sprintf("%sexport PATH=%v:$PATH\n", text, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.bash", []byte(text), 0644)
 	text = ""
-	
-	for  {
+
+	for {
 		time.Sleep(1 * time.Second)
 	}
-	
-	
+
 	fmt.Printf("Job's a good'un, boss\n")
 }
 
 func setCommand(p string) string {
 	return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\nset PATH=%v;\n\n\n", p, p, p)
-}	
+}
