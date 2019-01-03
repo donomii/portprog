@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/donomii/portprog.svg?branch=master)](https://travis-ci.org/donomii/portprog)
+
 # [The Portable Programmer](https://donomii.github.io/portprog/)
 
 Programming languages and libraries for the programmer on the move.  [Read the website](https://donomii.github.io/portprog/)
