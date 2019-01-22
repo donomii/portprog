@@ -741,7 +741,7 @@ func main() {
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 
 	fmt.Println("Windows:")
-	var text string = fmt.Sprintf("set GOPATH=%v/go/n", folderPath)
+	var text string = fmt.Sprintf("set GOPATH=%v/go\n", folderPath)
 	for _, v := range subPaths {
 		winpath := strings.Replace(v, "/", "\\", -1)
 		text = fmt.Sprintf("%sset PATH=%v;%%PATH%%\n", text, winpath)
