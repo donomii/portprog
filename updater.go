@@ -327,7 +327,7 @@ func unSevenZ(b Config, file string) {
 	if false {
 		go func() {
 			args := []string{b.SzPath, "x", file, "-aoa"}
-			log.Printf("Args: ", args)
+			log.Printf("Args: %v\n", args)
 			os.StartProcess(b.SzPath, args, &os.ProcAttr{})
 			startpipe <- 1
 			//FIXME start another thread to monitor the unzip and call wg.Done when it finishes
