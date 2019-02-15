@@ -338,11 +338,11 @@ func unSevenZ(b Config, file string) {
 
 		func() {
 			defer wg.Done()
-			startpipe <- 1 //Go functions can take a few seconds to be scheduled
+			//startpipe <- 1 //Go functions can take a few seconds to be scheduled
 			doCommand(b.SzPath, []string{"x", file, "-aoa"})
 
 		}()
-		<-startpipe
+		//<-startpipe
 		time.Sleep(1 * time.Second)
 
 	}
