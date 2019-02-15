@@ -325,7 +325,7 @@ func unSevenZ(b Config, file string) {
 
 	startpipe := make(chan int)
 	if false {
-		go func() {
+		func() {
 			args := []string{b.SzPath, "x", file, "-aoa"}
 			log.Printf("Args: %v\n", args)
 			os.StartProcess(b.SzPath, args, &os.ProcAttr{})
@@ -336,7 +336,7 @@ func unSevenZ(b Config, file string) {
 	}
 	if !noInstall {
 
-		go func() {
+		func() {
 			defer wg.Done()
 			startpipe <- 1 //Go functions can take a few seconds to be scheduled
 			doCommand(b.SzPath, []string{"x", file, "-aoa"})
@@ -698,7 +698,7 @@ func main() {
 	if !develMode {
 		figSay("CPAN")
 		working++
-		go func() {
+		func() {
 			repos = loadRepos("packages-other/cpan")
 			for _, v := range repos {
 				v = strings.Replace(v, "\r", "", -1)

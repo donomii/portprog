@@ -1,3 +1,4 @@
+Log::Log4perl
 Digest::SHA
 Log::Log4Perl
 JSON
@@ -22,7 +23,6 @@ Log::Log4perl
 App::Netdisco
 WWW::YouTube::Download
 Mojolicious
-Task::Kensho
 LWP::UserAgent
 Test::More
 JSON
@@ -33,7 +33,6 @@ App::cpanminus
 DBIx::Class::ResultSet
 Acme::DRM
 Selenium::Remote::Driver
-App::perlbrew
 Getopt::Long
 DBD::mysql
 Moo
