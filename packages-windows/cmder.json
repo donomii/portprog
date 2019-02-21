@@ -1,0 +1,9 @@
+{
+    "Name"  :   "cmder",
+    "Zip"   :   "cmder.7z",
+    "Url"   :   "https://github.com/cmderdev/cmder/releases/download/v1.3.11/cmder.7z",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application",
+	"BinDir":	"/"
+}
