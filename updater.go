@@ -746,7 +746,7 @@ func main() {
 		winpath := strings.Replace(v, "/", "\\", -1)
 		text = fmt.Sprintf("%sset PATH=%v;%%PATH%%\n", text, winpath)
 	}
-	text = text + "\nstart cmd /k cmd"
+	text = text + "\nstart cmd /k cmder\nstart cmd /k cmd"
 	fmt.Println(text)
 	ioutil.WriteFile("environment.bat", []byte(text), 0644)
 	text = ""
