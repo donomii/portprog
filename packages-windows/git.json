@@ -1,0 +1,9 @@
+{
+    "Name"  :   "PortableGit",
+    "Zip"   :   "PortableGit-2.20.1-32-bit.7z.exe",
+    "Url"   :   "https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/PortableGit-2.20.1-32-bit.7z.exe",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "Application",
+	"BinDir":	"/bin"
+}

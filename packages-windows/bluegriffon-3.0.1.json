@@ -1,0 +1,9 @@
+{
+    "Name"  :   "bluegriffon",
+    "Zip"   :   "bluegriffon-3.0.1.win-i686.zip",
+    "Url"   :   "http://bluegriffon.org/freshmeat/3.0.1/bluegriffon-3.0.1.win-i686.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
