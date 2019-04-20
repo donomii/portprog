@@ -1,0 +1,9 @@
+{
+    "Name"  :   "node-v10.15.3-win-x86",
+    "Zip"   :   "node-v10.15.3-win-x86.zip",
+    "Url"   :   "https://nodejs.org/dist/v10.15.3/node-v10.15.3-win-x86.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "ZipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
