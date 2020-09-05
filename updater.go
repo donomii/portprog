@@ -232,10 +232,7 @@ func unTar(b Config, zipPath string) {
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
-
 			unSevenZ(b, zipPath)
-
-			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 			doCommand("tar", []string{"-xjvf", zipPath})
@@ -253,7 +250,7 @@ func unTgzLib(b Config, zipPath string) {
 		if isWindows() {
 			unSevenZ(b, zipPath)
 
-			unSevenZ(b, fname)
+			//unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 		}
