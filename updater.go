@@ -1,22 +1,22 @@
 package main
 
-import "regexp"
-import "sync"
-import "time"
-import "log"
-import "github.com/probandula/figlet4go"
-import "runtime"
-import "fmt"
-import "io/ioutil"
-import "strings"
-import "os"
-import "os/exec"
-import "github.com/kardianos/osext"
-import "flag"
-
 import (
+	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"regexp"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/kardianos/osext"
+	"github.com/probandula/figlet4go"
 )
 
 var wg sync.WaitGroup
@@ -24,6 +24,7 @@ var installDir = "installs"
 var goExe = "installs/go/bin/go"
 var cpanExe = "installs/strawberry-perl/perl/bin/cpan"
 var gitExe = "installs/PortableGit-2.15.0"
+var tempDir = "temp"
 var noGcc = false
 var noGo = false
 var noGit = false
@@ -42,17 +43,33 @@ var subPaths []string = []string{
 	"langlibs/gopath/bin",
 }
 
-func downloadFile(filepath string, url string) (err error) {
-	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		// Create the file
-		out, err := os.Create(filepath)
-		if err != nil {
-			fmt.Printf("E> %v\n", err)
-			return err
-		}
-		defer out.Close()
+func MoveFile(sourcePath, destPath string) error {
+	inputFile, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("Couldn't open source file: %s", err)
+	}
+	outputFile, err := os.Create(destPath)
+	if err != nil {
+		inputFile.Close()
+		return fmt.Errorf("Couldn't open dest file: %s", err)
+	}
+	defer outputFile.Close()
+	_, err = io.Copy(outputFile, inputFile)
+	inputFile.Close()
+	if err != nil {
+		return fmt.Errorf("Writing to output file failed: %s", err)
+	}
+	// The copy was successful, so now delete the original file
+	err = os.Remove(sourcePath)
+	if err != nil {
+		return fmt.Errorf("Failed removing original file: %s", err)
+	}
+	return nil
+}
 
+func downloadFile(tempPath, finalfilepath string, url string) (err error) {
+	fmt.Printf("I> Downloading %v to %v\n", url, tempPath)
+	if _, err := os.Stat(finalfilepath); os.IsNotExist(err) {
 		// Get the data
 		resp, err := http.Get(url)
 		if err != nil {
@@ -61,12 +78,21 @@ func downloadFile(filepath string, url string) (err error) {
 		}
 		defer resp.Body.Close()
 
+		// Create the file
+		out, err := os.Create(tempPath)
+		if err != nil {
+			fmt.Printf("E> %v\n", err)
+			return err
+		}
+
 		// Writer the body to file
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
 			fmt.Printf("E> %v\n", err)
 			return err
 		}
+		defer out.Close()
+		MoveFile(tempPath, finalfilepath)
 	}
 	return nil
 }
@@ -418,7 +444,8 @@ func zipWithNoDirectory(b Config, p Package) {
 func doFetch(p Package, b Config) {
 	fetch := p.Fetch
 	if fetch == "web" {
-		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
+
+		downloadFile(b.TempDir+"/"+p.Zip, fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
 	}
 	if fetch == "git" {
 		if noGit {
@@ -589,7 +616,9 @@ func main() {
 	SzDir := fmt.Sprintf("%v/7zip", folderPath)
 	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
 	goDir := fmt.Sprintf("%v/go", folderPath)
+	tmpDir := fmt.Sprintf("%v/%v", folderPath, tempDir)
 	fmt.Println("I> Creating directories")
+	os.Mkdir(tmpDir, os.ModeDir|0777)
 	os.Mkdir(langlibs, os.ModeDir|0777)
 	os.Mkdir(gopathDir, os.ModeDir|0777)
 	os.Mkdir(cpanDir, os.ModeDir|0777)
@@ -611,10 +640,13 @@ func main() {
 	b.SourceDir = srcDir
 	b.SzPath = SzPath
 	b.ZipDir = zipsDir
+	b.TempDir = tmpDir
+
+	fmt.Printf("I> Selected configuration: %+v\n", b)
 	//b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
 	//os.Mkdir(b.SiloDir, os.ModeDir|0777)
 
-	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+	downloadFile(b.TempDir+"/7z1604.exe", "zips/7z1604.exe", b.ZipDir+"http://www.7-zip.org/a/7z1604.exe")
 
 	if isWindows() {
 		figSay("7zip")
@@ -625,11 +657,11 @@ func main() {
 	//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
 	//fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
 
-	downloadFile("zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
-	downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
-	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
+	downloadFile(b.TempDir+"/nuwen-15.3.7.7z", "zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
+	downloadFile(b.TempDir+"/Sources.gz", "zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
+	downloadFile(b.TempDir+"/gcc-5.1.0-tdm64-1-core.zip", "zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
 
-	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
+	downloadFile(b.TempDir+"/gmp-6.1.2.tar.bz2", "zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 	figSay("GCC COMPILER")
 	//os.Exit(0)
 	if !noGcc {
