@@ -418,6 +418,40 @@ func zipWithNoDirectory(b Config, p Package) {
 	os.Chdir(cwd)
 }
 
+func CopyFile(src, dst string) (int64, error) {
+  src_file, err := os.Open(src)
+  if err != nil {
+    return 0, err
+  }
+  defer src_file.Close()
+
+  src_file_stat, err := src_file.Stat()
+  if err != nil {
+    return 0, err
+  }
+
+  if !src_file_stat.Mode().IsRegular() {
+    return 0, fmt.Errorf("%s is not a regular file", src)
+  }
+
+  dst_file, err := os.Create(dst)
+  if err != nil {
+    return 0, err
+  }
+  defer dst_file.Close()
+  return io.Copy(dst_file, src_file)
+}
+
+func rawData(b Config, p Package) {
+	cwd, _ := os.Getwd()
+	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
+	os.Mkdir(targetDir, os.ModeDir|0777)
+	os.Chdir(targetDir)
+	CopyFile(zipFilePath(b, p.Zip), p.Name)
+
+	os.Chdir(cwd)
+}
+
 func doFetch(p Package, b Config) {
 	fetch := p.Fetch
 	if fetch == "web" {
@@ -504,6 +538,8 @@ func doAll(p Package, b Config) {
 		zipWithNoDirectory(b, p)
 	} else if plan == "zipWithDirectory" {
 		zipWithDirectory(b, p)
+	} else if plan == "rawData" {
+		rawData(b, p)
 	} else if plan == "msi" {
 		msi(b, p)
 	} else if plan == "dmg" {
@@ -532,6 +568,7 @@ func figSay(s string) {
 var working = 0
 
 func processDir(b Config, d string) {
+    log.Printf("Processing control files in %v\n", d)
 	files, err := ioutil.ReadDir(d)
 	if err != nil {
 		log.Fatal(err)
@@ -681,6 +718,7 @@ func main() {
 		}
 		printEnv()
 	}
+    processDir(b, "packages-data")
 	if develMode {
 		processDir(b, "packages-develop")
 	} else {
