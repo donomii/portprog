@@ -1,0 +1,9 @@
+{
+    "Name"  :   "aria2-1.35.0-win-32bit-build1",
+    "Zip"   :   "aria2-1.35.0-win-32bit-build1.zip",
+    "Url"   :  "https://github.com/aria2/aria2/releases/download/release-1.35.0/aria2-1.35.0-win-32bit-build1.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
