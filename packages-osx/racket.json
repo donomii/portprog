@@ -1,0 +1,9 @@
+{
+    "Name"  :   "racket",
+    "Zip"   :   "racket-6.12-x86_64-macosx.dmg",
+    "Url"   :   "https://mirror.racket-lang.org/installers/6.12/racket-6.12-x86_64-macosx.dmg",
+	"Fetch" :	"web",
+    "Plan"  :   "dmg",
+"Type"  :   "application",
+"BinDir":	"/"
+}

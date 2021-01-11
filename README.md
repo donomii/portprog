@@ -64,13 +64,20 @@ Or checkout the [latest code](https://github.com/donomii/portprog) from github.
 	--no-gcc	Don't download or install gcc
 	--no-golang	Don't download or install golang
 	--no-git 	Don't attempt to clone or update any repositories via git
+	--devel		Only install packages from the packages-devel directory
+        --file          Install using settings from file   
+	--no-install    Don't install anything, but do regenerate the environment scripts
 
-## Add your own
+## Operation
+
+Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
+
+## Adding your own
 
 Add your own downloads!  
 
-You can easily add any download you want.  Go to the packages directory (or packages-windows), copy
-a file there, and change it to download your url.
+*  Follow the [simple instructions](MakeYourOwnPackage.md)
+*  Send me a pull request so I can add your package to the distribution!
 
 Rerun portprog, and it will download and unpack your file.
 
@@ -78,6 +85,9 @@ Rerun portprog, and it will download and unpack your file.
 
 Delete the directory.  Portprog does not modify any part of your system outside of its own directory.
 
-# Download now!
+** Warning **
 
-New releases are available at [https://github.com/donomii/portprog/releases](https://github.com/donomii/portprog/releases)
+I can't control other programs and libraries, so when you use a program or library that portprog downloads for you, this third party might change your system.  
+
+I can't stop that, but I try not to use any programs that would do that.  You might end up with some files left in Application Data and the registry
+

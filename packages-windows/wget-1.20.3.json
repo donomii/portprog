@@ -1,0 +1,9 @@
+{
+    "Name"  :   "wget",
+    "Zip"   :   "wget-1.20.3-win32.zip",
+    "Url"   :   "https://eternallybored.org/misc/wget/releases/wget-1.20.3-win32.zip",
+	"Fetch" :	"web",
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
