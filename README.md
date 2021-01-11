@@ -1,65 +1,83 @@
-[![Build Status](https://travis-ci.org/donomii/portprog.svg?branch=master)](https://travis-ci.org/donomii/portprog)
+# The Portable Programmer
 
-# [The Portable Programmer](https://donomii.github.io/portprog/)
+Languages and libraries for the programmer on the move
 
-Programming languages and libraries for the programmer on the move.  [Read the website](https://donomii.github.io/portprog/)
+# [Download](https://github.com/donomii/portprog/releases)
 
-Double click to install GCC, Java, Perl, TclTk, Nim, Lazarus, Squeak Smalltalk, make, maven, Eclipse, IntelliJ, Codeblocks, Notepad++, and many supporting tools and libraries.
+[Download](https://github.com/donomii/portprog/releases) and double click to install GCC, Go, Perl, support libraries and much more!
 
-After installation, run environment.bat to open a command shell with all your paths correctly set up.
+# Background
 
-## Easy setup
-
-I frequently have to install my programming tools on a fresh computer.
-  Sometimes it's a new laptop, but usually it's a fresh VM or a computer at a client site.
-  And it is always frustrating, because it takes me hours to track down every minor library and
-  patch that I need to get something compiled.
+I frequently have to install my programming tools on a fresh computer.  It is always frustrating, because it takes me hours to track down every minor library and patch that I need to get something compiled.  
   
-Of course, there are no _minor_ libraries, because missing any of them halts my compile.  So
-I put together this installer to get my build environment set up as quickly as possible.
+So I made this installer to get myself set up as quickly and easily as possible.
 
-# Installation
+# Software list
 
-## Windows
+Portprog installs programming languages:
+
+* Gcc
+* Golang
+* Perl
+* Nim
+* IO
+* Lazarus
+* Neko
+* Squeak
+
+And editors
+
+* CodeBlocks
+* Notepad++
+* LiteIDE
+
+And support utilities
+
+* Make
+* Cmake
+* Git
+
+And also fetches the sources for
+
+* SDL
+* OpenAL
+* DCSS
+
+Don't see your favourite thing here?  Send me a pull request!
+
+(Or paste it into a bug report, I don't mind so long as I get it)
+
+# Install
+
+### Windows
 
 Download a new release from the [Releases page](https://github.com/donomii/portprog/releases).  Unpack it and double click the exe.
 
-## Linux and Mac
+### Linux and Mac
 
-	go get -u github.com/donomii/portprog
-	go build
-	./portprog
-
-## Options
-
-There aren't a lot.  This isn't another distribution, it's just a fancy downloader and unpacker.  There's no dependency management or build flags 
-or whatever.
+Download a source release from the [Releases page](https://github.com/donomii/portprog/releases), then follow the [build instructions](https://github.com/donomii/portprog).
+	
+Or checkout the [latest code](https://github.com/donomii/portprog) from github.
+	
+### Options
 
 	--no-gcc	Don't download or install gcc
-	--no-golang 	Don't download or install golang
+	--no-golang	Don't download or install golang
 	--no-git 	Don't attempt to clone or update any repositories via git
-	--devel		Only install packages from the packages-devel directory
-	
-## Operation
 
-Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
-## Adding your own
+## Add your own
 
-The goal of PortProg is to manage your own downloads.  You can easily add any download that you want:
+Add your own downloads!  
 
-*  Copy a json file from packages-windows to packages-devel
-*  Edit the file to add your download link and config options
-*  Run portprog.exe --devel to only install that package
-*  Send me a pull request so I can add your package to the distribution!
+You can easily add any download you want.  Go to the packages directory (or packages-windows), copy
+a file there, and change it to download your url.
 
+Rerun portprog, and it will download and unpack your file.
 
 ## Uninstall
 
 Delete the directory.  Portprog does not modify any part of your system outside of its own directory.
 
-** Warning **
+# Download now!
 
-I can't control other programs and libraries, so when you use a program or library that portprog downloads for you, this third party might change your system.  
-
-I can't stop that, but I try not to use any programs that would do that.  At the worst, you will end up with some files left in Application Data
-
+New releases are available at [https://github.com/donomii/portprog/releases](https://github.com/donomii/portprog/releases)
