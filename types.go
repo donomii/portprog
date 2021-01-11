@@ -11,4 +11,5 @@ type Config struct {
 	SzPath                  string          //Path to sevenzip
 	ZipDir                  string
 	SiloDir                 string
+	TempDir                 string
 }

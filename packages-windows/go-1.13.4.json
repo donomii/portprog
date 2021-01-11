@@ -1,0 +1,9 @@
+{
+    "Name"  :   "go",
+    "Zip"   :   "go1.13.4.windows-amd64.zip",
+    "Url"   :   "https://dl.google.com/go/go1.13.4.windows-amd64.zip",
+    "Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+    "Type"  :   "application",
+    "BinDir":	"/bin"
+}

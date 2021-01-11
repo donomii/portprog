@@ -1,0 +1,9 @@
+{
+    "Name"  :   "gcc8.1.0_x86_64-w64-mingw32",
+    "Zip"   :   "gcc8.1.0_x86_64-w64-mingw32.7z",
+    "Url"   :   "http://www.bawt.tcl3d.org/download/Bootstrap-Windows/gcc8.1.0_x86_64-w64-mingw32.7z",
+	"Fetch" :	"web",
+    "Plan"  :   "ZipWithDirectory",
+	"Type"  :   "Application",
+	"BinDir": "/mingw64/bin"
+}

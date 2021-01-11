@@ -1,0 +1,9 @@
+{
+    "Name"  :   "zig-windows-x86_64-0.6.0",
+    "Zip"   :   "zig-windows-x86_64-0.6.0.zip",
+    "Url"   :   "https://ziglang.org/download/0.6.0/zig-windows-x86_64-0.6.0.zip",
+    "Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+    "Type"  :   "application",
+    "BinDir":	"/"
+}

@@ -1,22 +1,22 @@
 package main
 
-import "regexp"
-import "sync"
-import "time"
-import "log"
-import "github.com/probandula/figlet4go"
-import "runtime"
-import "fmt"
-import "io/ioutil"
-import "strings"
-import "os"
-import "os/exec"
-import "github.com/kardianos/osext"
-import "flag"
-
 import (
+	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"regexp"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/kardianos/osext"
+	"github.com/probandula/figlet4go"
 )
 
 var wg sync.WaitGroup
@@ -24,11 +24,13 @@ var installDir = "installs"
 var goExe = "installs/go/bin/go"
 var cpanExe = "installs/strawberry-perl/perl/bin/cpan"
 var gitExe = "installs/PortableGit-2.15.0"
+var tempDir = "temp"
 var noGcc = false
 var noGo = false
 var noGit = false
 var noInstall = false
 var develMode = false
+var oneFile = ""
 
 var subPaths []string = []string{
 	"installs/PortableGit-2.15.0/bin",
@@ -42,17 +44,33 @@ var subPaths []string = []string{
 	"langlibs/gopath/bin",
 }
 
-func downloadFile(filepath string, url string) (err error) {
-	fmt.Printf("I> Downloading %v to %v\n", url, filepath)
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		// Create the file
-		out, err := os.Create(filepath)
-		if err != nil {
-			fmt.Printf("E> %v\n", err)
-			return err
-		}
-		defer out.Close()
+func MoveFile(sourcePath, destPath string) error {
+	inputFile, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("Couldn't open source file: %s", err)
+	}
+	outputFile, err := os.Create(destPath)
+	if err != nil {
+		inputFile.Close()
+		return fmt.Errorf("Couldn't open dest file: %s", err)
+	}
+	defer outputFile.Close()
+	_, err = io.Copy(outputFile, inputFile)
+	inputFile.Close()
+	if err != nil {
+		return fmt.Errorf("Writing to output file failed: %s", err)
+	}
+	// The copy was successful, so now delete the original file
+	err = os.Remove(sourcePath)
+	if err != nil {
+		return fmt.Errorf("Failed removing original file: %s", err)
+	}
+	return nil
+}
 
+func downloadFile(tempPath, finalfilepath string, url string) (err error) {
+	fmt.Printf("I> Downloading %v to %v\n", url, tempPath)
+	if _, err := os.Stat(finalfilepath); os.IsNotExist(err) {
 		// Get the data
 		resp, err := http.Get(url)
 		if err != nil {
@@ -61,12 +79,21 @@ func downloadFile(filepath string, url string) (err error) {
 		}
 		defer resp.Body.Close()
 
+		// Create the file
+		out, err := os.Create(tempPath)
+		if err != nil {
+			fmt.Printf("E> %v\n", err)
+			return err
+		}
+
 		// Writer the body to file
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
 			fmt.Printf("E> %v\n", err)
 			return err
 		}
+		defer out.Close()
+		MoveFile(tempPath, finalfilepath)
 	}
 	return nil
 }
@@ -232,10 +259,7 @@ func unTar(b Config, zipPath string) {
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
 		if isWindows() {
-
 			unSevenZ(b, zipPath)
-
-			unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 			doCommand("tar", []string{"-xjvf", zipPath})
@@ -253,7 +277,7 @@ func unTgzLib(b Config, zipPath string) {
 		if isWindows() {
 			unSevenZ(b, zipPath)
 
-			unSevenZ(b, fname)
+			//unSevenZ(b, fname)
 		} else {
 			doCommand("tar", []string{"-xzvf", zipPath})
 		}
@@ -455,7 +479,8 @@ func rawData(b Config, p Package) {
 func doFetch(p Package, b Config) {
 	fetch := p.Fetch
 	if fetch == "web" {
-		downloadFile(fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
+
+		downloadFile(b.TempDir+"/"+p.Zip, fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
 	}
 	if fetch == "git" {
 		if noGit {
@@ -604,6 +629,7 @@ func main() {
 	flag.BoolVar(&noGo, "no-golang", false, "Don't install the Go compiler")
 	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
 	flag.BoolVar(&noInstall, "no-install", false, "Don't install anything")
+	flag.StringVar(&oneFile, "file", "", "Install using settings from file")
 	flag.BoolVar(&develMode, "devel", false, "Only process packages-develop directory")
 
 	flag.Parse()
@@ -629,7 +655,9 @@ func main() {
 	SzDir := fmt.Sprintf("%v/7zip", folderPath)
 	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
 	goDir := fmt.Sprintf("%v/go", folderPath)
+	tmpDir := fmt.Sprintf("%v/%v", folderPath, tempDir)
 	fmt.Println("I> Creating directories")
+	os.Mkdir(tmpDir, os.ModeDir|0777)
 	os.Mkdir(langlibs, os.ModeDir|0777)
 	os.Mkdir(gopathDir, os.ModeDir|0777)
 	os.Mkdir(cpanDir, os.ModeDir|0777)
@@ -651,130 +679,139 @@ func main() {
 	b.SourceDir = srcDir
 	b.SzPath = SzPath
 	b.ZipDir = zipsDir
+	b.TempDir = tmpDir
+
+	fmt.Printf("I> Selected configuration: %+v\n", b)
 	//b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
 	//os.Mkdir(b.SiloDir, os.ModeDir|0777)
 
-	downloadFile("zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
+	downloadFile(b.TempDir+"/7z1604.exe", "zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
 
 	if isWindows() {
 		figSay("7zip")
 		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
 	}
 
-	//fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
-	//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
-	//fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
+	if oneFile != "" {
+		p := LoadJSON(oneFile)
 
-	downloadFile("zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
-	downloadFile("zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
-	downloadFile("zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
+		doAll(p, b)
+	} else {
 
-	downloadFile("zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
-	figSay("GCC COMPILER")
-	//os.Exit(0)
-	if !noGcc {
-		if !isWindows() {
-			buildGcc(b, folderPath)
-		} else {
-			os.Chdir(rootDir)
+		//fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
+		//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
+		//fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
 
-			doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-15.3.7.7z"})
-			os.Chdir("components-15.3")
-			files, err := ioutil.ReadDir(".")
-			if err != nil {
-				log.Fatal(err)
+		downloadFile(b.TempDir+"/nuwen-15.3.7.7z", "zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
+		downloadFile(b.TempDir+"/Sources.gz", "zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
+		downloadFile(b.TempDir+"/gcc-5.1.0-tdm64-1-core.zip", "zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
+
+		downloadFile(b.TempDir+"/gmp-6.1.2.tar.bz2", "zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
+		figSay("GCC COMPILER")
+		//os.Exit(0)
+		if !noGcc {
+			if !isWindows() {
+				buildGcc(b, folderPath)
+			} else {
+				os.Chdir(rootDir)
+
+				doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-15.3.7.7z"})
+				os.Chdir("components-15.3")
+				files, err := ioutil.ReadDir(".")
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				for _, file := range files {
+					if strings.HasSuffix(file.Name(), "7z") {
+
+						unSevenZ(b, file.Name())
+					}
+				}
+				os.Chdir(folderPath)
+				printEnv()
+
 			}
+		}
+		os.Setenv("PATH", fmt.Sprintf("%v/components-15.3/bin/;%v", rootDir, os.Getenv("PATH")))
 
-			for _, file := range files {
-				if strings.HasSuffix(file.Name(), "7z") {
+		if !noGo {
+			fmt.Println(figlet("GO COMPILER"))
+			os.Mkdir(goDir, os.ModeDir|0777)
 
-					unSevenZ(b, file.Name())
+			printEnv()
+			if runtime.GOOS == "darwin" {
+				figSay("Unpacking Golang")
+				unPackGoMacOSX(b, folderPath)
+			} else if runtime.GOOS == "windows" {
+				os.Chdir(goDir)
+				figSay("Unpacking Golang")
+				unSevenZ(b, "../zips/go1.7.5.windows-amd64.zip")
+				os.Chdir(folderPath)
+			} else {
+				os.Setenv("GOROOT", goDir)
+				figSay("Building Golang")
+				buildGo(goDir)
+			}
+			printEnv()
+		}
+		processDir(b, "packages-data")
+		if develMode {
+			processDir(b, "packages-develop")
+		} else {
+			if isWindows() {
+				processDir(b, "packages-windows")
+			} else {
+				processDir(b, "packages")
+				if isOSX() {
+					processDir(b, "packages-osx")
 				}
 			}
-			os.Chdir(folderPath)
-			printEnv()
+		}
 
+		var repos []string
+		if !develMode {
+			figSay("CPAN")
+			working++
+			func() {
+				repos = loadRepos("packages-other/cpan")
+				for _, v := range repos {
+					v = strings.Replace(v, "\r", "", -1)
+					installCpan(v)
+				}
+				working--
+			}()
+		}
+
+		if !develMode {
+			if !noGit {
+				figSay("LIBRARIES")
+				repos = loadRepos("packages-other/go_libs")
+				for _, v := range repos {
+					v = strings.Replace(v, "\r", "", -1)
+					installGoGithub(v)
+				}
+
+				figSay("APPLICATIONS")
+				repos = loadRepos("packages-other/go_apps")
+				for _, v := range repos {
+					v = strings.Replace(v, "\r", "", -1)
+					installGoGithub(v)
+				}
+
+				figSay("GITHUB")
+				repos = loadRepos("packages-other/github")
+				os.Mkdir("git", 0777)
+				os.Chdir(fmt.Sprintf("%v/git", folderPath))
+
+				for _, v := range repos {
+					v = strings.Replace(v, "\r", "", -1)
+					installGithub(v)
+				}
+				os.Chdir(folderPath)
+			}
 		}
 	}
-	os.Setenv("PATH", fmt.Sprintf("%v/components-15.3/bin/;%v", rootDir, os.Getenv("PATH")))
-
-	if !noGo {
-		fmt.Println(figlet("GO COMPILER"))
-		os.Mkdir(goDir, os.ModeDir|0777)
-
-		printEnv()
-		if runtime.GOOS == "darwin" {
-			figSay("Unpacking Golang")
-			unPackGoMacOSX(b, folderPath)
-		} else if runtime.GOOS == "windows" {
-			os.Chdir(goDir)
-			figSay("Unpacking Golang")
-			unSevenZ(b, "../zips/go1.7.5.windows-amd64.zip")
-			os.Chdir(folderPath)
-		} else {
-			os.Setenv("GOROOT", goDir)
-			figSay("Building Golang")
-			buildGo(goDir)
-		}
-		printEnv()
-	}
-    processDir(b, "packages-data")
-	if develMode {
-		processDir(b, "packages-develop")
-	} else {
-		if isWindows() {
-			processDir(b, "packages-windows")
-		} else {
-			processDir(b, "packages")
-			if isOSX() {
-				processDir(b, "packages-osx")
-			}
-		}
-	}
-
-	var repos []string
-	if !develMode {
-		figSay("CPAN")
-		working++
-		func() {
-			repos = loadRepos("packages-other/cpan")
-			for _, v := range repos {
-				v = strings.Replace(v, "\r", "", -1)
-				installCpan(v)
-			}
-			working--
-		}()
-	}
-
-	if !develMode {
-		if !noGit {
-			figSay("LIBRARIES")
-			repos = loadRepos("packages-other/go_libs")
-			for _, v := range repos {
-				v = strings.Replace(v, "\r", "", -1)
-				installGoGithub(v)
-			}
-
-			figSay("APPLICATIONS")
-			repos = loadRepos("packages-other/go_apps")
-			for _, v := range repos {
-				v = strings.Replace(v, "\r", "", -1)
-				installGoGithub(v)
-			}
-
-			figSay("GITHUB")
-			repos = loadRepos("packages-other/github")
-			os.Mkdir("git", 0777)
-			os.Chdir(fmt.Sprintf("%v/git", folderPath))
-
-			for _, v := range repos {
-				v = strings.Replace(v, "\r", "", -1)
-				installGithub(v)
-			}
-			os.Chdir(folderPath)
-		}
-	}
-
 	fmt.Println(figlet("ENVIRONMENT"))
 	fmt.Printf("\nNow set your path with one of the following commands\n\n")
 

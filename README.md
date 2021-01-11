@@ -39,17 +39,18 @@ or whatever.
 	--no-golang 	Don't download or install golang
 	--no-git 	Don't attempt to clone or update any repositories via git
 	--devel		Only install packages from the packages-devel directory
-	
+        --file          Install using settings from file   
+	--no-install    Don't install anything, but do regenerate the environment scripts
+
 ## Operation
 
 Portprog starts and checks the packages (or packages-windows) directory, then attempts to download all the files to the zips directory, unpacking them in the background.  It will not download any zips already present in the zips directory.
+
 ## Adding your own
 
 The goal of PortProg is to manage your own downloads.  You can easily add any download that you want:
 
-*  Copy a json file from packages-windows to packages-devel
-*  Edit the file to add your download link and config options
-*  Run portprog.exe --devel to only install that package
+*  Follow the [simple instructions](MakeYourOwnPackage.md)
 *  Send me a pull request so I can add your package to the distribution!
 
 
@@ -61,5 +62,5 @@ Delete the directory.  Portprog does not modify any part of your system outside 
 
 I can't control other programs and libraries, so when you use a program or library that portprog downloads for you, this third party might change your system.  
 
-I can't stop that, but I try not to use any programs that would do that.  At the worst, you will end up with some files left in Application Data
+I can't stop that, but I try not to use any programs that would do that.  You might end up with some files left in Application Data and the registry
 
