@@ -1,0 +1,6 @@
+{
+    "Name"  :   "earthquakes-last-month.geojson",
+    "Url"   :   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+	"Fetch" :	"web",
+	"Type"  :   "data",
+}

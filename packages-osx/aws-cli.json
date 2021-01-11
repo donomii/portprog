@@ -1,0 +1,9 @@
+{
+    "Name"  :   "aws-cli",
+    "Zip"   :   "AWSCLI32.msi",
+    "Url"   :   "https://atom.io/download/mac",
+	"Fetch" :	"web",
+    "Plan"  :   "msi",
+	"Type"  :   "application",
+	"BinDir":	"/"
+}
