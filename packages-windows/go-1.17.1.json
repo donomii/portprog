@@ -1,0 +1,9 @@
+{
+    "Name"  :   "go-1.17.1",
+    "Zip"   :   "go1.17.1.windows-amd64.zip",
+    "Url"   :   "https://golang.org/dl/go1.17.1.windows-amd64.zip",
+    "Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+    "Type"  :   "application",
+    "BinDir":	"/bin"
+}
