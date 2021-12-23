@@ -1,0 +1,9 @@
+{
+    "Name"  :   "go-1.17.5",
+    "Zip"   :   "go1.17.5.darwin-amd64.tar.gz",
+    "Url"   :   "https://go.dev/dl/go1.17.5.darwin-amd64.tar.gz",
+    "Fetch" :	"web",
+    "Plan"  :   "zipWithDirectory",
+    "Type"  :   "application",
+    "BinDir":	"/bin"
+}
