@@ -1,8 +1,0 @@
-{
-    "Name"  :   "DCSS",
-    "Zip"   :   "",
-    "Url"   :   "https://github.com/crawl/crawl",
-	"Fetch" :	"git",
-	"Branch" : "master",
-    "Plan"  :   "cmake"
-}
