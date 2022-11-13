@@ -252,19 +252,13 @@ func makeOpt(optName, optVal string) string {
 }
 
 func unTar(b Config, zipPath string) {
-	p2 := strings.Replace(zipPath, ".gz", "", -1)
-	p2 = strings.Replace(zipPath, ".tgz", ".tar", -1)
-	p2 = strings.Replace(p2, ".lzma", "", -1)
-	p2 = strings.Replace(p2, ".bz2", "", -1)
-	splits := strings.Split(p2, "/")
+	zipPath = strings.ReplaceAll(zipPath, "\\", "/")
+	splits := strings.Split(zipPath, "/")
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
-		if isWindows() {
-			unSevenZ(b, zipPath)
-		} else {
-			doCommand("tar", []string{"-xzvf", zipPath})
-			doCommand("tar", []string{"-xjvf", zipPath})
-		}
+		unSevenZ(b, zipPath)
+		doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
+		doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
 	} else {
 		log.Println("Could not find ", fname)
 	}
@@ -280,7 +274,8 @@ func unTgzLib(b Config, zipPath string) {
 
 			//unSevenZ(b, fname)
 		} else {
-			doCommand("tar", []string{"-xzvf", zipPath})
+			doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
+				doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
 		}
 	} else {
 		log.Println("Could not extract ", fname)
