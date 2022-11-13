@@ -1,0 +1,8 @@
+{
+    "Name"  :   "racketprogs",
+    "Zip"   :   "",
+    "Url"   :   "https://gitlab.com/donomii/racketprogs",
+	"Fetch" :	"git",
+	"Branch" : "master",
+    "Plan"  :   "gitAndMake"
+}

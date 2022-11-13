@@ -17,6 +17,7 @@ import (
 
 	"github.com/kardianos/osext"
 	"github.com/probandula/figlet4go"
+	"github.com/donomii/goof"
 )
 
 var wg sync.WaitGroup
@@ -490,6 +491,7 @@ func doFetch(p Package, b Config) {
 		doCommand("git", []string{"clone", url, name, "--recursive"})
 		os.Chdir(name)
 		doCommand("git", []string{"checkout", branch})
+		doCommand("git", []string{"pull"})
 		doCommand("git", []string{"submodule", "foreach", "--recursive", "git", "checkout", "master"})
 		os.Chdir(cwd)
 	}
@@ -540,14 +542,14 @@ func doAll(p Package, b Config) {
 	targetDir := b.InstallDir
 	doFetch(p, b)
 
-	cwd, _ := os.Getwd()
+	initialDir, _ := os.Getwd()
 	os.Chdir(targetDir)
 
 	//unBzLib(b, p.Name)
 	//unTgzLib(b, p.Name)
 
 	plan := p.Plan
-	os.Chdir(cwd)
+	os.Chdir(initialDir)
 	if plan == "standardConfigure" {
 		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir)
 	} else if plan == "goGetAndMake" {
@@ -571,14 +573,24 @@ func doAll(p Package, b Config) {
 	}
 
 	if p.BinDir != "" {
-		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+p.BinDir)
+		subPaths = append(subPaths, b.SourceDir+"/"+p.Name+"/"+p.BinDir)
 	}
+
 	for _, v := range p.BinDirs {
 		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+v)
 	}
+
+	//Cleanup build files, if required
 	for _, v := range p.Deletes {
 		os.Remove(b.InstallDir + "/" + p.Name + "/" + v)
 	}
+
+	os.Chdir(b.InstallDir+"/"+p.Name)
+	fmt.Println("Current directory: ", goof.Cwd())
+	distZipPath := "dist.zip"
+	//Package up the binaries from the dist/ directory into a zip file
+	doCommand("zip", []string{"-r", distZipPath,  "dist/"})
+	os.Chdir(initialDir)
 }
 
 func figSay(s string) {
