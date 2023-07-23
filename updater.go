@@ -18,6 +18,7 @@ import (
 	"github.com/kardianos/osext"
 	"github.com/donomii/goof"
 	"github.com/probandula/figlet4go"
+	"github.com/donomii/goof"
 )
 
 var wg sync.WaitGroup
@@ -229,19 +230,13 @@ func makeOpt(optName, optVal string) string {
 }
 
 func unTar(b Config, zipPath string) {
-	p2 := strings.Replace(zipPath, ".gz", "", -1)
-	p2 = strings.Replace(zipPath, ".tgz", ".tar", -1)
-	p2 = strings.Replace(p2, ".lzma", "", -1)
-	p2 = strings.Replace(p2, ".bz2", "", -1)
-	splits := strings.Split(p2, "/")
+	zipPath = strings.ReplaceAll(zipPath, "\\", "/")
+	splits := strings.Split(zipPath, "/")
 	fname := splits[len(splits)-1]
 	if _, err := os.Stat(zipPath); err == nil {
-		if isWindows() {
-			unSevenZ(b, zipPath)
-		} else {
-			doCommand("tar", []string{"-xzvf", zipPath})
-			doCommand("tar", []string{"-xjvf", zipPath})
-		}
+		unSevenZ(b, zipPath)
+		doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
+		doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
 	} else {
 		log.Println("Could not find ", fname)
 	}
@@ -257,7 +252,8 @@ func unTgzLib(b Config, zipPath string) {
 
 			//unSevenZ(b, fname)
 		} else {
-			doCommand("tar", []string{"-xzvf", zipPath})
+			doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
+				doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
 		}
 	} else {
 		log.Println("Could not extract ", fname)
@@ -473,6 +469,7 @@ func doFetch(p Package, b Config) {
 		doCommand("git", []string{"clone", url, name, "--recursive"})
 		os.Chdir(name)
 		doCommand("git", []string{"checkout", branch})
+		doCommand("git", []string{"pull"})
 		doCommand("git", []string{"submodule", "foreach", "--recursive", "git", "checkout", "master"})
 		os.Chdir(cwd)
 	}
@@ -525,14 +522,14 @@ func doAll(p Package, b Config) {
 	targetDir := b.InstallDir
 	doFetch(p, b)
 
-	cwd, _ := os.Getwd()
+	initialDir, _ := os.Getwd()
 	os.Chdir(targetDir)
 
 	//unBzLib(b, p.Name)
 	//unTgzLib(b, p.Name)
 
 	plan := p.Plan
-	os.Chdir(cwd)
+	os.Chdir(initialDir)
 	if plan == "standardConfigure" {
 		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir)
 	} else if plan == "goGetAndMake" {
@@ -556,14 +553,24 @@ func doAll(p Package, b Config) {
 	}
 
 	if p.BinDir != "" {
-		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+p.BinDir)
+		subPaths = append(subPaths, b.SourceDir+"/"+p.Name+"/"+p.BinDir)
 	}
+
 	for _, v := range p.BinDirs {
 		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+v)
 	}
+
+	//Cleanup build files, if required
 	for _, v := range p.Deletes {
 		os.Remove(b.InstallDir + "/" + p.Name + "/" + v)
 	}
+
+	os.Chdir(b.InstallDir+"/"+p.Name)
+	fmt.Println("Current directory: ", goof.Cwd())
+	distZipPath := "dist.zip"
+	//Package up the binaries from the dist/ directory into a zip file
+	doCommand("zip", []string{"-r", distZipPath,  "dist/"})
+	os.Chdir(initialDir)
 }
 
 func figSay(s string) {
