@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/kardianos/osext"
+	"github.com/donomii/goof"
 	"github.com/probandula/figlet4go"
 )
 
@@ -121,16 +122,25 @@ func copyFile(source, target string) {
 
 //Takes a path to a dmg file, mounts it, then return the mount point and device path
 func attachDMG(path string) (string, string) {
-	results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
-	r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
-	b := r.FindStringSubmatch(results)
-	s := regexp.MustCompile(`\s+`)
-	bits := s.Split(b[0], 3)
-	//fmt.Println(bits)
-	device := string(bits[0])
-	mountpoint := string(bits[2])
-	fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
-	return mountpoint, device
+	if goof.Exists(path) {
+		results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
+		r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
+		b := r.FindStringSubmatch(results)
+		if len(b) > 0 {
+			s := regexp.MustCompile(`\s+`)
+			bits := s.Split(b[0], 3)
+			//fmt.Println(bits)
+			if len(bits) == 3 {
+				device := string(bits[0])
+				mountpoint := string(bits[2])
+				fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
+				return mountpoint, device
+			}
+		}
+	} else {
+		log.Printf("File not found: %v\n", path)
+	}
+	return "",""
 }
 
 func detachDMG(device string) {
@@ -180,38 +190,6 @@ func loadRepos(filename string) []string {
 	}
 }
 
-func unPackGoMacOSX(b Config, folderPath string) {
-	//doCommand("xar", []string{"-xf", "go1.7.5.darwin-amd64.tar.gz"})
-	//doCommand("sh", []string{"-c", "cat com.googlecode.go.pkg/Payload | gunzip -dc | cpio -i"})
-	unTgzLib(b, "go1.7.5.darwin-amd64")
-	os.Setenv("GOROOT", fmt.Sprintf("%v/go/", folderPath))
-	os.Setenv("PATH", fmt.Sprintf("%v/go/bin/:%v", folderPath, os.Getenv("PATH")))
-	doCommand("go", []string{"version"})
-}
-
-func buildGo(goDir string) {
-	figlet("COMPILING GO")
-	cwd, _ := os.Getwd()
-	fmt.Println(fmt.Sprintf("I> Deleting directory %v", goDir))
-	//doCommand("rm", []string{"-r", goDir})
-	doCommand("git", []string{"clone", "https://go.googlesource.com/go", goDir})
-	os.Chdir(fmt.Sprintf("%v/src", goDir))
-
-	doCommand("git", []string{"checkout", "go1.7.5"})
-
-	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		doCommand("bash", []string{"all.bash"})
-		os.Chdir(cwd)
-		os.Setenv("GOROOT", fmt.Sprintf("%v/%v/", goDir, cwd))
-		os.Setenv("PATH", fmt.Sprintf("%v/%v/bin/:%v", cwd, goDir, os.Getenv("PATH")))
-	} else {
-		doCommand("all.bat", []string{})
-		os.Chdir(cwd)
-		os.Setenv("GOROOT", fmt.Sprintf("%v\\%v\\", goDir, cwd))
-		os.Setenv("PATH", fmt.Sprintf("%v\\%v\\bin\\:%v", cwd, goDir, os.Getenv("PATH")))
-	}
-
-}
 
 func printEnv() {
 	fmt.Println("I> GOROOT_BOOTSTRAP", os.Getenv("GOROOT_BOOTSTRAP"))
@@ -535,9 +513,11 @@ func dmg(b Config, p Package) {
 	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
 	fmt.Println("I> installing ", zipFilePath(b, p.Zip), " to ", targetDir)
 	mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
-	fmt.Println("I> Mounted DMG on ", mountpoint)
-	copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
-	detachDMG(device)
+	if mountpoint != "" {
+		fmt.Println("I> Mounted DMG on ", mountpoint)
+		copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
+		detachDMG(device)
+	}
 }
 
 func doAll(p Package, b Config) {
@@ -698,9 +678,6 @@ func main() {
 		doAll(p, b)
 	} else {
 
-		//fetchBuild(rootDir, "libelf-0.8.13", "libelf-0.8.13.tar.gz", "http://www.mr511.de/software/libelf-0.8.13.tar.gz", "standardConfigure", "")
-		//fetchBuild(rootDir, "busybox-w32", srcDir, "https://github.com/rmyorston/busybox-w32", "gitAndMake", "master")
-		//fetchBuild(rootDir, "busybox", srcDir, "git://busybox.net/busybox.git", "gitAndMake", "trunk")
 
 		downloadFile(b.TempDir+"/nuwen-15.3.7.7z", "zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
 		downloadFile(b.TempDir+"/Sources.gz", "zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
@@ -708,7 +685,6 @@ func main() {
 
 		downloadFile(b.TempDir+"/gmp-6.1.2.tar.bz2", "zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
 		figSay("GCC COMPILER")
-		//os.Exit(0)
 		if !noGcc {
 			if !isWindows() {
 				buildGcc(b, folderPath)
@@ -735,37 +711,17 @@ func main() {
 		}
 		os.Setenv("PATH", fmt.Sprintf("%v/components-15.3/bin/;%v", rootDir, os.Getenv("PATH")))
 
-		if !noGo {
-			fmt.Println(figlet("GO COMPILER"))
-			os.Mkdir(goDir, os.ModeDir|0777)
-
-			printEnv()
-			if runtime.GOOS == "darwin" {
-				figSay("Unpacking Golang")
-				unPackGoMacOSX(b, folderPath)
-			} else if runtime.GOOS == "windows" {
-				os.Chdir(goDir)
-				figSay("Unpacking Golang")
-				unSevenZ(b, "../zips/go1.7.5.windows-amd64.zip")
-				os.Chdir(folderPath)
-			} else {
-				os.Setenv("GOROOT", goDir)
-				figSay("Building Golang")
-				buildGo(goDir)
-			}
-			printEnv()
-		}
 		processDir(b, "packages-data")
 		if develMode {
 			processDir(b, "packages-develop")
 		} else {
-			if isWindows() {
-				processDir(b, "packages-windows")
-			} else {
-				processDir(b, "packages")
-				if isOSX() {
+			switch {
+			case isWindows():
+					processDir(b, "packages-windows")
+			case isOSX():
 					processDir(b, "packages-osx")
-				}
+			default:
+					processDir(b, "packages")
 			}
 		}
 
@@ -828,7 +784,7 @@ func main() {
 
 	fmt.Println("Fish Shell:")
 	for _, v := range subPaths {
-		text = fmt.Sprintf("%sset -x %v/%v $PATH\n", text, folderPath, v)
+		text = fmt.Sprintf("%sset -x PATH %v $PATH\n", text, v)
 	}
 	fmt.Println(text)
 	ioutil.WriteFile("environment.fish", []byte(text), 0644)
