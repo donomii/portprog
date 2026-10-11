@@ -122,9 +122,27 @@ func testPowerShellActivation(t *testing.T, root, packageName, executable string
 }
 
 func testBatchActivation(t *testing.T, root, packageName string) {
-	command := exec.Command("cmd.exe", "/D", "/V:OFF", "/Q", "/U")
-	command.Env = append(os.Environ(), "PORTPROG_ACTIVATION="+filepath.Join(root, "environment.bat"))
-	command.Stdin = strings.NewReader("for /f \"tokens=2 delims=:\" %C in ('chcp') do for %N in (%C) do set PORTPROG_CODEPAGE_BEFORE=%N\r\n\"%PORTPROG_ACTIVATION%\"\r\nif errorlevel 1 exit /b 1\r\n\"%PORTPROG_ACTIVATION%\"\r\nif errorlevel 1 exit /b 1\r\nfor /f \"tokens=2 delims=:\" %C in ('chcp') do for %N in (%C) do set PORTPROG_CODEPAGE_AFTER=%N\r\nset PORTPROG_CODEPAGE_\r\nset GOPATH\r\nset PATH\r\n")
+	driver := strings.Join([]string{
+		"@echo off",
+		"for /f \"tokens=2 delims=:\" %%C in ('chcp') do for %%N in (%%C) do set PORTPROG_CODEPAGE_BEFORE=%%N",
+		"call environment.bat",
+		"if errorlevel 1 exit /b 1",
+		"call environment.bat",
+		"if errorlevel 1 exit /b 1",
+		"for /f \"tokens=2 delims=:\" %%C in ('chcp') do for %%N in (%%C) do set PORTPROG_CODEPAGE_AFTER=%%N",
+		"echo PORTPROG_OUTPUT_BEGIN",
+		"set PORTPROG_CODEPAGE_",
+		"set GOPATH",
+		"set PATH",
+		"echo PORTPROG_OUTPUT_END",
+		"exit /b 0",
+	}, "\r\n") + "\r\n"
+	if err := os.WriteFile(filepath.Join(root, "verify-activation.bat"), []byte(driver), 0644); err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command("cmd.exe", "/D", "/E:ON", "/V:OFF", "/Q", "/U", "/C", "verify-activation.bat")
+	command.Dir = root
+	command.Env = os.Environ()
 	output, err := command.CombinedOutput()
 	if len(output)%2 != 0 {
 		t.Fatalf("Command Prompt returned %d bytes; expected UTF-16 output: %q", len(output), output)
@@ -134,18 +152,38 @@ func testBatchActivation(t *testing.T, root, packageName string) {
 		characters[index] = binary.LittleEndian.Uint16(output[index*2:])
 	}
 	text := string(utf16.Decode(characters))
+	defer func() {
+		if t.Failed() {
+			t.Logf("Complete Command Prompt output:\n%s", text)
+		}
+	}()
 	if err != nil {
 		t.Fatalf("Command Prompt activation failed: %v\n%s", err, text)
 	}
 	values := map[string]string{}
+	started, complete := false, false
 	for _, line := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
+		if line == "PORTPROG_OUTPUT_BEGIN" {
+			started = true
+			continue
+		}
+		if started && line == "PORTPROG_OUTPUT_END" {
+			complete = true
+			break
+		}
 		name, value, found := strings.Cut(line, "=")
-		if found {
+		if started && found {
 			values[strings.ToUpper(name)] = value
 		}
 	}
+	if !complete {
+		t.Fatal("Command Prompt did not produce both environment output markers")
+	}
 	if values["PORTPROG_CODEPAGE_BEFORE"] == "" || values["PORTPROG_CODEPAGE_BEFORE"] != values["PORTPROG_CODEPAGE_AFTER"] {
-		t.Errorf("Command Prompt code page changed: before %q, after %q", values["PORTPROG_CODEPAGE_BEFORE"], values["PORTPROG_CODEPAGE_AFTER"])
+		t.Errorf("Command Prompt code page changed: before %q, after %q; complete output:\n%s", values["PORTPROG_CODEPAGE_BEFORE"], values["PORTPROG_CODEPAGE_AFTER"], text)
+	}
+	if values["GOPATH"] == "" || values["PATH"] == "" {
+		t.Fatalf("Command Prompt did not report both GOPATH and PATH; complete output:\n%s", text)
 	}
 	checkActivationValues(t, values["GOPATH"], values["PATH"], root, packageName, os.Getenv("PATH"))
 }
@@ -169,18 +207,18 @@ func checkActivation(t *testing.T, command *exec.Cmd, root, packageName string) 
 func checkActivationValues(t *testing.T, goPath, pathValue, root, packageName, originalPath string) {
 	t.Helper()
 	expectedGoPath := filepath.Join(root, "langlibs", "gopath")
-	if filepath.Clean(goPath) != expectedGoPath {
+	if !sameActivationDirectory(goPath, expectedGoPath) {
 		t.Errorf("GOPATH = %q; expected relocated workspace %q", goPath, expectedGoPath)
 	}
 	expected := []string{filepath.Join(root, "installs", packageName), filepath.Join(root, "installs", packageName, "bin"), filepath.Join(expectedGoPath, "bin")}
 	paths := filepath.SplitList(pathValue)
 	for i, directory := range expected {
-		if len(paths) <= i || filepath.Clean(paths[i]) != directory {
+		if len(paths) <= i || !sameActivationDirectory(paths[i], directory) {
 			t.Errorf("PATH position %d = %q; expected %q", i, paths, directory)
 		}
 		count := 0
 		for _, entry := range paths {
-			if filepath.Clean(entry) == directory {
+			if sameActivationDirectory(entry, directory) {
 				count++
 			}
 		}
@@ -193,6 +231,12 @@ func checkActivationValues(t *testing.T, goPath, pathValue, root, packageName, o
 			t.Errorf("original PATH directory %q was lost; resulting PATH = %q", previous, paths)
 		}
 	}
+}
+
+func sameActivationDirectory(left, right string) bool {
+	leftInfo, leftErr := os.Stat(left)
+	rightInfo, rightErr := os.Stat(right)
+	return leftErr == nil && rightErr == nil && leftInfo.IsDir() && rightInfo.IsDir() && os.SameFile(leftInfo, rightInfo)
 }
 
 func containsEnvironmentPath(paths []string, value string) bool {

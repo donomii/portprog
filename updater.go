@@ -62,6 +62,9 @@ func run(args []string, output, diagnostics io.Writer) error {
 	if err := validateOptions(options); err != nil {
 		return err
 	}
+	if err := validateRoot(options.root); err != nil {
+		return err
+	}
 	root, err := filepath.Abs(options.root)
 	if err != nil {
 		return fmt.Errorf("resolve installation directory %q: %w", options.root, err)

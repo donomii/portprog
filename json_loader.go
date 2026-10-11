@@ -8,7 +8,7 @@ func loadPackage(filename string) (Package, error) {
 		return Package{}, err
 	}
 	if err := validatePackage(recipe); err != nil {
-		return Package{}, fmt.Errorf("validate package %q: %w", filename, err)
+		return Package{}, fmt.Errorf("validate package %s: %w", filename, err)
 	}
 	return recipe, nil
 }

@@ -104,7 +104,7 @@ JSON documents are bounded to 32 MiB and decoded strictly. Receipt paths are rel
 
 ## Activation and offline export
 
-Activation derives the installation root from the script's location, quotes directory names, prepends selected executable directories, removes duplicate PATH entries and preserves the caller's existing PATH. Every shell uses the same Go workspace. Sourcing activation does not start another terminal. Command Prompt activation requires delayed expansion to be disabled and reports this explicitly when necessary.
+Activation derives the installation root from the script's location, quotes directory names, prepends selected executable directories, avoids adding repeated Portprog PATH entries and preserves the caller's existing PATH. Every shell uses the same Go workspace. Sourcing activation does not start another terminal. Command Prompt activation requires delayed expansion to be disabled and reports this explicitly when necessary.
 
 An offline bundle contains the host executable, no-argument launchers, offline settings, a new lockfile and verified ZIP images of the selected installed packages. `source.lock.json` preserves the original artifact identities. The first bundle launch installs those images locally; it does not rebuild source or contact upstream servers. A bundle is specific to its recorded OS/architecture. The entire bundle directory can be moved; activation is generated at its current location.
 
