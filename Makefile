@@ -1,5 +1,18 @@
 all: build
 
 build:
-	go get "github.com/probandula/figlet4go"
-	go build .
+	./build.sh
+
+test:
+	./test.sh
+
+run:
+	./run.sh
+
+demo:
+	./demo.sh
+
+install:
+	./install.sh
+
+.PHONY: all build test run demo install

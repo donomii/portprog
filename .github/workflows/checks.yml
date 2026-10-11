@@ -1,0 +1,49 @@
+name: Build and portable installation checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22.x', stable]
+    runs-on: ${{ matrix.os }}
+    env:
+      GOTOOLCHAIN: local
+      GOPROXY: 'off'
+      GOSUMDB: 'off'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - name: Install Fish for Linux activation checks
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y fish
+      - name: Install Fish for macOS activation checks
+        if: runner.os == 'macOS'
+        run: brew install fish
+      - name: Test, build, validate catalogs and run the local installation check
+        if: runner.os != 'Windows'
+        env:
+          PORTPROG_REQUIRE_FISH: '1'
+        run: ./test.sh
+      - name: Test, build, validate catalogs and run the local installation check on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: test.bat
+      - name: Check races
+        if: runner.os != 'Windows'
+        env:
+          PORTPROG_REQUIRE_FISH: '1'
+        run: go test -race ./...
