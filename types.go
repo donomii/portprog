@@ -81,3 +81,12 @@ type Receipt struct {
 	Package       LockedPackage   `json:"package"`
 	Files         []InstalledFile `json:"files"`
 }
+
+type Settings struct {
+	SchemaVersion    int    `json:"schema_version"`
+	DefaultProfile   string `json:"default_profile"`
+	Offline          bool   `json:"offline"`
+	HTTPTimeoutSecs  int    `json:"http_timeout_seconds"`
+	MaxDownloadBytes int64  `json:"max_download_bytes"`
+	MaxExtractBytes  int64  `json:"max_extract_bytes"`
+}

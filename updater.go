@@ -1,817 +1,213 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"os"
-	"os/exec"
-	"regexp"
+	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
-
-	"github.com/kardianos/osext"
-	"github.com/donomii/goof"
-	"github.com/probandula/figlet4go"
-	"github.com/donomii/goof"
 )
 
-var wg sync.WaitGroup
-var installDir = "installs"
-var goExe = "installs/go/bin/go"
-var cpanExe = "installs/strawberry-perl/perl/bin/cpan"
-var gitExe = "installs/PortableGit-2.15.0"
-var tempDir = "temp"
-var noGcc = false
-var noGo = false
-var noGit = false
-var noInstall = false
-var develMode = false
-var oneFile = ""
-
-var subPaths []string = []string{
-	"installs/PortableGit-2.15.0/bin",
-	"installs/PortableGit-2.15.0/usr/bin",
-	"installs/go/bin",
-	"7zip",
-	"installs/components-15.3.7/bin",
-	"installs/strawberry/perl/site/bin",
-	"installs/strawberry-perl/perl/bin",
-	"installs/strawberry-perl/c/bin",
-	"langlibs/gopath/bin",
-}
-
-func MoveFile(sourcePath, destPath string) error {
-	inputFile, err := os.Open(sourcePath)
-	if err != nil {
-		return fmt.Errorf("Couldn't open source file: %s", err)
-	}
-	outputFile, err := os.Create(destPath)
-	if err != nil {
-		inputFile.Close()
-		return fmt.Errorf("Couldn't open dest file: %s", err)
-	}
-	defer outputFile.Close()
-	_, err = io.Copy(outputFile, inputFile)
-	inputFile.Close()
-	if err != nil {
-		return fmt.Errorf("Writing to output file failed: %s", err)
-	}
-	// The copy was successful, so now delete the original file
-	err = os.Remove(sourcePath)
-	if err != nil {
-		return fmt.Errorf("Failed removing original file: %s", err)
-	}
-	return nil
-}
-
-func downloadFile(tempPath, finalfilepath string, url string) (err error) {
-	fmt.Printf("I> Downloading %v to %v\n", url, tempPath)
-	if _, err := os.Stat(finalfilepath); os.IsNotExist(err) {
-		// Get the data
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Printf("E> %v\n", err)
-			return err
-		}
-		defer resp.Body.Close()
-
-		// Create the file
-		out, err := os.Create(tempPath)
-		if err != nil {
-			fmt.Printf("E> %v\n", err)
-			return err
-		}
-
-		// Writer the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			fmt.Printf("E> %v\n", err)
-			return err
-		}
-		defer out.Close()
-		MoveFile(tempPath, finalfilepath)
-	}
-	return nil
-}
-
-func doCommand(cmd string, args []string) string {
-	if noInstall {
-		return ""
-	}
-	fmt.Println("C>", cmd, args)
-	out, err := exec.Command(cmd, args...).CombinedOutput()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "IO> %v\n", string(out))
-		fmt.Fprintf(os.Stderr, "E> %v\n", err)
-		//os.Exit(1)
-	}
-	if string(out) != "" {
-		fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
-	}
-	return string(out)
-}
-
-func copyFile(source, target string) {
-	doCommand("/bin/cp", []string{"-r", source, target})
-}
-
-//Takes a path to a dmg file, mounts it, then return the mount point and device path
-func attachDMG(path string) (string, string) {
-	if goof.Exists(path) {
-		results := doCommand("/usr/bin/hdiutil", []string{"attach", path})
-		r := regexp.MustCompile(`(/dev/\S+)\s+Apple_HFS\s+(.*)`)
-		b := r.FindStringSubmatch(results)
-		if len(b) > 0 {
-			s := regexp.MustCompile(`\s+`)
-			bits := s.Split(b[0], 3)
-			//fmt.Println(bits)
-			if len(bits) == 3 {
-				device := string(bits[0])
-				mountpoint := string(bits[2])
-				fmt.Printf("\n!!!device: %v, mountpoint: %v\n", device, mountpoint)
-				return mountpoint, device
-			}
-		}
-	} else {
-		log.Printf("File not found: %v\n", path)
-	}
-	return "",""
-}
-
-func detachDMG(device string) {
-	doCommand("/usr/bin/hdiutil", []string{"detach", device})
-}
-
-func buildGithub(repo string) {
-	cmd := goExe
-	args := []string{"build", repo}
-	fmt.Printf("I> Building %v\n", repo)
-	doCommand(cmd, args)
-}
-
-func installGoGithub(repo string) {
-	cmd := goExe
-	args := []string{"get", "-u", repo}
-	fmt.Printf("I> Installing %v\n", repo)
-	doCommand(cmd, args)
-}
-
-func installGithub(repo string) {
-
-	cmd := gitExe
-	args := []string{"clone", repo}
-	fmt.Printf("I> Cloning %v\n", repo)
-	doCommand(cmd, args)
-}
-
-func installCpan(repo string) {
-	cmd := force_winpath(cpanExe)
-	args := []string{repo}
-	fmt.Printf("I> Installing %v\n", repo)
-	doCommand(cmd, args)
-}
-
-func loadRepos(filename string) []string {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		//Do something
-	}
-	lines1 := strings.Split(string(content), "\r\n")
-	lines2 := strings.Split(string(content), "\n")
-	if len(lines1) > len(lines2) {
-		return lines1
-	} else {
-		return lines2
-	}
-}
-
-
-func printEnv() {
-	fmt.Println("I> GOROOT_BOOTSTRAP", os.Getenv("GOROOT_BOOTSTRAP"))
-	fmt.Println("I> GOPATH", os.Getenv("GOPATH"))
-	fmt.Println("I> PATH", os.Getenv("PATH"))
-	fmt.Println("I> GOROOT", runtime.GOROOT())
-}
-
-func figlet(s string) string {
-	ascii := figlet4go.NewAsciiRender()
-
-	// Adding the colors to RenderOptions
-	options := figlet4go.NewRenderOptions()
-	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		options.FontColor = []figlet4go.Color{
-			// Colors can be given by default ansi color codes...
-			figlet4go.ColorGreen,
-			figlet4go.ColorYellow,
-			figlet4go.ColorCyan,
-			// ...or by an hex string...
-			//figlet4go.NewTrueColorFromHexString("885DBA"),
-			// ...or by an TrueColor object with rgb values
-			//figlet4go.TrueColor{136, 93, 186},
-		}
-	}
-
-	renderStr, _ := ascii.RenderOpts(s, options)
-	return renderStr
-}
-
-func makeWith(optName, srcDir, libName string) string {
-	return fmt.Sprintf("--with-%v=%v/%v", optName, srcDir, libName)
-}
-
-func makeOpt(optName, optVal string) string {
-	return fmt.Sprintf("--%v=%v", optName, optVal)
-}
-
-func unTar(b Config, zipPath string) {
-	zipPath = strings.ReplaceAll(zipPath, "\\", "/")
-	splits := strings.Split(zipPath, "/")
-	fname := splits[len(splits)-1]
-	if _, err := os.Stat(zipPath); err == nil {
-		unSevenZ(b, zipPath)
-		doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
-		doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
-	} else {
-		log.Println("Could not find ", fname)
-	}
-}
-
-func unTgzLib(b Config, zipPath string) {
-	p2 := strings.Replace(zipPath, ".gz", "", -1)
-	splits := strings.Split(p2, "/")
-	fname := splits[len(splits)-1]
-	if _, err := os.Stat(zipPath); err == nil {
-		if isWindows() {
-			unSevenZ(b, zipPath)
-
-			//unSevenZ(b, fname)
-		} else {
-			doCommand("tar", []string{"-xzvf", zipPath, "--force-local"})
-				doCommand("tar", []string{"-xjvf", zipPath, "--force-local"})
-		}
-	} else {
-		log.Println("Could not extract ", fname)
-	}
-}
-
-func unBzLib(b Config, lib string) {
-	path := fmt.Sprintf("%v/%v.tar.bz2", b.ZipDir, lib)
-	if _, err := os.Stat(path); err == nil {
-		if isWindows() {
-
-			unSevenZ(b, path)
-		} else {
-			doCommand("tar", []string{"-xjvf", path})
-		}
-	}
-}
-
-func recurseRemove(path string) {
-	os.RemoveAll(path)
-}
-
-func chmod(perms, path string) {
-	if !isWindows() {
-		doCommand("chmod", []string{perms, path})
-	}
-}
-
-func standardConfigureBuild(b Config, name, buildDir string, args []string) {
-	cwd, _ := os.Getwd()
-	configurePath := fmt.Sprintf("%v/%v/%v", cwd, name, "configure")
-	unBzLib(b, name)
-	unTgzLib(b, name)
-	os.Chdir(name)
-	os.Chdir(buildDir)
-	chmod("a+rwx", "configure")
-	doCommand(configurePath, args)
-	doCommand("make", []string{})
-	doCommand("make", []string{"install"})
-	os.Chdir(cwd)
-	recurseRemove(name)
-}
-
-func buildGcc(b Config, path string) {
-	arch := "x86_64"
-	targetDir := fmt.Sprintf("%v/%v", path, installDir)
-	//srcDir := fmt.Sprintf("%v/src", path)
-	os.Chdir(path)
-	fmt.Println(figlet("GMP"))
-	//doCommand("git", []string{"clone", "https://github.com/bw-oss/gmp"})
-	gmpName := "gmp-6.1.2"
-	mpfrName := "mpfr-3.1.5"
-	mpcName := "mpc-1.0.3"
-	gccName := "gcc-6.3.0"
-	islName := "isl-0.15"
-
-	standardConfigureBuild(b, gmpName, ".", []string{"--disable-shared", "--enable-static", makeOpt("prefix", targetDir), makeOpt("build", arch)})
-	standardConfigureBuild(b, mpfrName, ".", []string{"--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeOpt("prefix", targetDir)})
-	standardConfigureBuild(b, mpcName, ".", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp", targetDir), makeOpt("with-mpfr", targetDir), makeOpt("prefix", targetDir)})
-	standardConfigureBuild(b, islName, ".", []string{"--disable-shared", "--enable-static", makeOpt("with-gmp-prefix", targetDir), makeOpt("prefix", targetDir)})
-	standardConfigureBuild(b, gccName, "gcc/objdir", []string{"--enable-languages=c,c++,go", "--disable-shared", "--enable-static", "--disable-multilib", "--disable-shared", "--enable-static", makeWith("gmp", targetDir, ""), makeWith("mpfr", targetDir, ""), makeWith("mpc", targetDir, ""), makeWith("isl", targetDir, ""), makeOpt("prefix", targetDir)})
-}
-
-func unSevenZ(b Config, file string) {
-	fmt.Println(b.SzPath, file)
-	wg.Add(1)
-
-	startpipe := make(chan int)
-	if false {
-		func() {
-			args := []string{b.SzPath, "x", file, "-aoa"}
-			log.Printf("Args: %v\n", args)
-			os.StartProcess(b.SzPath, args, &os.ProcAttr{})
-			startpipe <- 1
-			//FIXME start another thread to monitor the unzip and call wg.Done when it finishes
-		}()
-		<-startpipe
-	}
-	if !noInstall {
-
-		func() {
-			defer wg.Done()
-			//startpipe <- 1 //Go functions can take a few seconds to be scheduled
-			doCommand(b.SzPath, []string{"x", file, "-aoa"})
-
-		}()
-		//<-startpipe
-		time.Sleep(1 * time.Second)
-
-	}
-	if false {
-		defer wg.Done()
-		doCommand(b.SzPath, []string{"x", file, "-aoa"})
-
-	}
-}
-
-/*
-func unzipWithPathMake(zipName) {
-	cwd, _ := os.Getwd()
-	os.Chdir(srcDir)
-	unSevenZ(b, "../zips/zeromq-4.2.1.zip")
-	os.Chdir("zeromq-4.2.1/zeromq-4.2.1/builds/mingw32")
-	doCommand("make", []string{})
-	os.Chdir(zipName)
-}
-*/
-
-func Make(b Config, p Package) {
-	cwd, _ := os.Getwd()
-	os.Chdir(b.InstallDir)
-	os.Chdir(p.Name)
-	here, _ := os.Getwd()
-	fmt.Printf("Making in %v\n", here)
-	doCommand("make", []string{"install"})
-	os.Chdir(cwd)
-}
-
-func goGetAndMake(targetDir, name, goPath, url, p1 string) {
-	if noGit {
-		return
-	}
-	//p1 is the branch name
-	cwd, _ := os.Getwd()
-	doCommand("go", []string{"get", "-u", url})
-	os.Chdir(goPath)
-	os.Chdir("src")
-	os.Chdir(url)
-	doCommand("git", []string{"checkout", p1})
-	thsDir, _ := os.Getwd()
-	fmt.Printf("Making in %v\n", thsDir)
-	doCommand("make", []string{"install"})
-	os.Chdir(cwd)
-}
-
-func zipFilePath(b Config, name string) string {
-	path := fmt.Sprintf("%v/%v", b.ZipDir, name)
-	return path
-}
-
-func zipWithDirectory(b Config, p Package) {
-	cwd, _ := os.Getwd()
-	targetDir := fmt.Sprintf("%v", b.InstallDir) //Make an appsdir and install there?
-	os.Mkdir(targetDir, os.ModeDir|0777)
-	os.Chdir(targetDir)
-
-	unTar(b, zipFilePath(b, p.Zip))
-	unSevenZ(b, zipFilePath(b, p.Zip))
-	os.Chdir(cwd)
-}
-
-func zipWithNoDirectory(b Config, p Package) {
-	cwd, _ := os.Getwd()
-	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-	os.Mkdir(targetDir, os.ModeDir|0777)
-	os.Chdir(targetDir)
-
-	unTar(b, zipFilePath(b, p.Zip))
-	unSevenZ(b, zipFilePath(b, p.Zip))
-	os.Chdir(cwd)
-}
-
-func CopyFile(src, dst string) (int64, error) {
-  src_file, err := os.Open(src)
-  if err != nil {
-    return 0, err
-  }
-  defer src_file.Close()
-
-  src_file_stat, err := src_file.Stat()
-  if err != nil {
-    return 0, err
-  }
-
-  if !src_file_stat.Mode().IsRegular() {
-    return 0, fmt.Errorf("%s is not a regular file", src)
-  }
-
-  dst_file, err := os.Create(dst)
-  if err != nil {
-    return 0, err
-  }
-  defer dst_file.Close()
-  return io.Copy(dst_file, src_file)
-}
-
-func rawData(b Config, p Package) {
-	cwd, _ := os.Getwd()
-	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-	os.Mkdir(targetDir, os.ModeDir|0777)
-	os.Chdir(targetDir)
-	CopyFile(zipFilePath(b, p.Zip), p.Name)
-
-	os.Chdir(cwd)
-}
-
-func doFetch(p Package, b Config) {
-	fetch := p.Fetch
-	if fetch == "web" {
-
-		downloadFile(b.TempDir+"/"+p.Zip, fmt.Sprintf("%v/%v", b.ZipDir, p.Zip), p.Url)
-	}
-	if fetch == "git" {
-		if noGit {
-			return
-		}
-		url := p.Url
-		branch := p.Branch
-		name := p.Name
-		targetDir := b.InstallDir
-		cwd, _ := os.Getwd()
-		os.Chdir(targetDir)
-		doCommand("git", []string{"clone", url, name, "--recursive"})
-		os.Chdir(name)
-		doCommand("git", []string{"checkout", branch})
-		doCommand("git", []string{"pull"})
-		doCommand("git", []string{"submodule", "foreach", "--recursive", "git", "checkout", "master"})
-		os.Chdir(cwd)
-	}
-}
-
-func doGit(p Package, b Config) {
-	url := p.Url
-	branch := p.Branch
-	name := p.Name
-	targetDir := b.InstallDir
-	cwd, _ := os.Getwd()
-	os.Chdir(targetDir)
-	doCommand("git", []string{"clone", url, name})
-	os.Chdir(name)
-	doCommand("git", []string{"checkout", branch})
-	os.Chdir(cwd)
-}
-
-func force_winpath(str string) string {
-	winpath := strings.Replace(str, "/", "\\", -1)
-	return winpath
-}
-
-func msi(b Config, p Package) {
-	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-	fmt.Println(b.SzPath, zipFilePath(b, p.Zip))
-	// we can use /i to do full installs including registry updates, but that requires the user to click things
-	// prefer /a because it just dumps the files in the directory, and most open source programs don't actually
-	// use the registry
-	args := []string{"/a", force_winpath(zipFilePath(b, p.Zip)), fmt.Sprintf("INSTALLLOCATION=%v", force_winpath(targetDir)),
-		fmt.Sprintf("INSTALLDIR=%v", force_winpath(targetDir)),
-		fmt.Sprintf("TARGETDIR=%v", force_winpath(targetDir)),
-		"/q", "/lv", "log.txt"}
-	doCommand("msiexec.exe", args)
-}
-
-func dmg(b Config, p Package) {
-	targetDir := fmt.Sprintf("%v/%v", b.InstallDir, p.Name)
-	fmt.Println("I> installing ", zipFilePath(b, p.Zip), " to ", targetDir)
-	mountpoint, device := attachDMG(zipFilePath(b, p.Zip))
-	if mountpoint != "" {
-		fmt.Println("I> Mounted DMG on ", mountpoint)
-		copyFile(mountpoint+"/"+p.Name+".app", b.InstallDir)
-		detachDMG(device)
-	}
-}
-
-func doAll(p Package, b Config) {
-	figSay(p.Name)
-	targetDir := b.InstallDir
-	doFetch(p, b)
-
-	initialDir, _ := os.Getwd()
-	os.Chdir(targetDir)
-
-	//unBzLib(b, p.Name)
-	//unTgzLib(b, p.Name)
-
-	plan := p.Plan
-	os.Chdir(initialDir)
-	if plan == "standardConfigure" {
-		standardConfigureBuild(b, p.Name, ".", []string{makeOpt("prefix", targetDir)}) //, makeOpt("with-sysroot", targetDir)
-	} else if plan == "goGetAndMake" {
-		goGetAndMake(targetDir, p.Name, b.InstallDir, p.Url, p.Branch) //use zip field as goPath
-	} else if plan == "gitAndMake" {
-		Make(b, p) //use zip field as srcDir (i.e. buildDir)
-	} else if plan == "zipWithNoDirectory" {
-		zipWithNoDirectory(b, p)
-	} else if plan == "zipWithDirectory" {
-		zipWithDirectory(b, p)
-	} else if plan == "rawData" {
-		rawData(b, p)
-	} else if plan == "msi" {
-		msi(b, p)
-	} else if plan == "dmg" {
-		dmg(b, p)
-	} else if plan == "customCommand" {
-		//customCommand(b, p)
-	} else {
-		log.Println("Unknown plan: ", plan)
-	}
-
-	if p.BinDir != "" {
-		subPaths = append(subPaths, b.SourceDir+"/"+p.Name+"/"+p.BinDir)
-	}
-
-	for _, v := range p.BinDirs {
-		subPaths = append(subPaths, b.InstallDir+"/"+p.Name+"/"+v)
-	}
-
-	//Cleanup build files, if required
-	for _, v := range p.Deletes {
-		os.Remove(b.InstallDir + "/" + p.Name + "/" + v)
-	}
-
-	os.Chdir(b.InstallDir+"/"+p.Name)
-	fmt.Println("Current directory: ", goof.Cwd())
-	distZipPath := "dist.zip"
-	//Package up the binaries from the dist/ directory into a zip file
-	doCommand("zip", []string{"-r", distZipPath,  "dist/"})
-	os.Chdir(initialDir)
-}
-
-func figSay(s string) {
-	fmt.Println(figlet(s))
-}
-
-var working = 0
-
-func processDir(b Config, d string) {
-    log.Printf("Processing control files in %v\n", d)
-	files, err := ioutil.ReadDir(d)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-		//working = working + 1
-
-		fname := fmt.Sprintf("%v/%v", d, file.Name())
-
-		if _, err := os.Stat(fname); os.IsNotExist(err) {
-			fname = fmt.Sprintf("%v\\%v", d, file.Name())
-		}
-		p := LoadJSON(fname)
-
-		doAll(p, b)
-		//working--
-
-	}
-
-}
-
-func isWindows() bool {
-	return runtime.GOOS == "windows"
-}
-
-func isOSX() bool {
-	return runtime.GOOS == "darwin"
+type commandOptions struct {
+	root, profile, file, bundle, remove string
+	validate, lock, offline, noInstall bool
+	noGcc, noGo, noGit, devel bool
+	repair, list, selfTest bool
 }
 
 func main() {
-	flag.BoolVar(&noGcc, "no-gcc", false, "Don't install gcc locally")
-	flag.BoolVar(&noGo, "no-golang", false, "Don't install the Go compiler")
-	flag.BoolVar(&noGit, "no-git", false, "Don't attempt to clone or update with git")
-	flag.BoolVar(&noInstall, "no-install", false, "Don't install anything")
-	flag.StringVar(&oneFile, "file", "", "Install using settings from file")
-	flag.BoolVar(&develMode, "devel", false, "Only process packages-develop directory")
-
-	flag.Parse()
-	printEnv()
-	figSay(runtime.GOOS)
-	os.Setenv("CFLAGS", "-D_XOPEN_SOURCE=1")
-	folderPath, err := osext.ExecutableFolder()
-	if err != nil {
+	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {
+		logFailure(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	//Update the predefined paths from relative to absolute
-	for i, v := range subPaths {
-		subPaths[i] = fmt.Sprintf("%v/%v", folderPath, v)
-	}
-
-	langlibs := fmt.Sprintf("%v/langlibs", folderPath)
-	gopathDir := fmt.Sprintf("%v/gopath", langlibs)
-	cpanDir := fmt.Sprintf("%v/cpan", langlibs)
-	zipsDir := fmt.Sprintf("%v/zips", folderPath)
-	rootDir := fmt.Sprintf("%v/%v", folderPath, installDir)
-	srcDir := fmt.Sprintf("%v/src", folderPath)
-	SzDir := fmt.Sprintf("%v/7zip", folderPath)
-	SzPath := fmt.Sprintf("%v/7zip/7z.exe", folderPath)
-	goDir := fmt.Sprintf("%v/go", folderPath)
-	tmpDir := fmt.Sprintf("%v/%v", folderPath, tempDir)
-	fmt.Println("I> Creating directories")
-	os.Mkdir(tmpDir, os.ModeDir|0777)
-	os.Mkdir(langlibs, os.ModeDir|0777)
-	os.Mkdir(gopathDir, os.ModeDir|0777)
-	os.Mkdir(cpanDir, os.ModeDir|0777)
-	os.Mkdir(zipsDir, os.ModeDir|0777)
-	os.Mkdir(rootDir, os.ModeDir|0777)
-	os.Mkdir(SzDir, os.ModeDir|0777)
-	os.Mkdir(srcDir, os.ModeDir|0777)
-	os.Mkdir("packages-develop", os.ModeDir|0777)
-	fmt.Println("I> Creating ", goDir)
-	os.Mkdir(goDir, os.ModeDir|0777)
-	os.Setenv("GOPATH", gopathDir)
-	os.Setenv("GOROOT_BOOTSTRAP", runtime.GOROOT())
-
-	os.Chdir(folderPath)
-
-	var b Config
-	b.InstallDir = rootDir
-	b.GoPath = gopathDir
-	b.SourceDir = srcDir
-	b.SzPath = SzPath
-	b.ZipDir = zipsDir
-	b.TempDir = tmpDir
-
-	fmt.Printf("I> Selected configuration: %+v\n", b)
-	//b.SiloDir = fmt.Sprintf("%v/silo", folderPath)
-	//os.Mkdir(b.SiloDir, os.ModeDir|0777)
-
-	downloadFile(b.TempDir+"/7z1604.exe", "zips/7z1604.exe", "http://www.7-zip.org/a/7z1604.exe")
-
-	if isWindows() {
-		figSay("7zip")
-		doCommand("zips/7z1604.exe", []string{"/S", fmt.Sprintf("/D=%v", SzDir)})
-	}
-
-	if oneFile != "" {
-		p := LoadJSON(oneFile)
-
-		doAll(p, b)
-	} else {
-
-
-		downloadFile(b.TempDir+"/nuwen-15.3.7.7z", "zips/nuwen-15.3.7.7z", "https://nuwen.net/files/mingw/components-15.3.7z")
-		downloadFile(b.TempDir+"/Sources.gz", "zips/Sources.gz", "http://nl.archive.ubuntu.com/ubuntu/dists/devel/main/source/Sources.gz")
-		downloadFile(b.TempDir+"/gcc-5.1.0-tdm64-1-core.zip", "zips/gcc-5.1.0-tdm64-1-core.zip", "https://kent.dl.sourceforge.net/project/tdm-gcc/TDM-GCC%205%20series/5.1.0-tdm64-1/gcc-5.1.0-tdm64-1-core.zip")
-
-		downloadFile(b.TempDir+"/gmp-6.1.2.tar.bz2", "zips/gmp-6.1.2.tar.bz2", "https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2")
-		figSay("GCC COMPILER")
-		if !noGcc {
-			if !isWindows() {
-				buildGcc(b, folderPath)
-			} else {
-				os.Chdir(rootDir)
-
-				doCommand("../7zip/7z.exe", []string{"x", "../zips/nuwen-15.3.7.7z"})
-				os.Chdir("components-15.3")
-				files, err := ioutil.ReadDir(".")
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				for _, file := range files {
-					if strings.HasSuffix(file.Name(), "7z") {
-
-						unSevenZ(b, file.Name())
-					}
-				}
-				os.Chdir(folderPath)
-				printEnv()
-
-			}
-		}
-		os.Setenv("PATH", fmt.Sprintf("%v/components-15.3/bin/;%v", rootDir, os.Getenv("PATH")))
-
-		processDir(b, "packages-data")
-		if develMode {
-			processDir(b, "packages-develop")
-		} else {
-			switch {
-			case isWindows():
-					processDir(b, "packages-windows")
-			case isOSX():
-					processDir(b, "packages-osx")
-			default:
-					processDir(b, "packages")
-			}
-		}
-
-		var repos []string
-		if !develMode {
-			figSay("CPAN")
-			working++
-			func() {
-				repos = loadRepos("packages-other/cpan")
-				for _, v := range repos {
-					v = strings.Replace(v, "\r", "", -1)
-					installCpan(v)
-				}
-				working--
-			}()
-		}
-
-		if !develMode {
-			if !noGit {
-				figSay("LIBRARIES")
-				repos = loadRepos("packages-other/go_libs")
-				for _, v := range repos {
-					v = strings.Replace(v, "\r", "", -1)
-					installGoGithub(v)
-				}
-
-				figSay("APPLICATIONS")
-				repos = loadRepos("packages-other/go_apps")
-				for _, v := range repos {
-					v = strings.Replace(v, "\r", "", -1)
-					installGoGithub(v)
-				}
-
-				figSay("GITHUB")
-				repos = loadRepos("packages-other/github")
-				os.Mkdir("git", 0777)
-				os.Chdir(fmt.Sprintf("%v/git", folderPath))
-
-				for _, v := range repos {
-					v = strings.Replace(v, "\r", "", -1)
-					installGithub(v)
-				}
-				os.Chdir(folderPath)
-			}
-		}
-	}
-	fmt.Println(figlet("ENVIRONMENT"))
-	fmt.Printf("\nNow set your path with one of the following commands\n\n")
-
-	fmt.Println("Windows:")
-	var text string = fmt.Sprintf("set GOPATH=%v/go\n", folderPath)
-	for _, v := range subPaths {
-		winpath := strings.Replace(v, "/", "\\", -1)
-		text = fmt.Sprintf("%sset PATH=%v;%%PATH%%\n", text, winpath)
-	}
-	text = text + "\nstart cmd /k cmder\nstart cmd /k cmd"
-	fmt.Println(text)
-	ioutil.WriteFile("environment.bat", []byte(text), 0644)
-	text = ""
-
-	fmt.Println("Fish Shell:")
-	for _, v := range subPaths {
-		text = fmt.Sprintf("%sset -x PATH %v $PATH\n", text, v)
-	}
-	fmt.Println(text)
-	ioutil.WriteFile("environment.fish", []byte(text), 0644)
-	text = ""
-
-	fmt.Println("Bash Shell")
-	for _, v := range subPaths {
-		text = fmt.Sprintf("%sexport PATH=%v:$PATH\n", text, v)
-	}
-	fmt.Println(text)
-	ioutil.WriteFile("environment.bash", []byte(text), 0644)
-	text = ""
-
-	for {
-		time.Sleep(1 * time.Second)
-	}
-
-	fmt.Printf("Job's a good'un, boss\n")
 }
 
-func setCommand(p string) string {
-	return fmt.Sprintf("set -x PATH %v $PATH\nexport PATH=%v/:$PATH\nset PATH=%v;\n\n\n", p, p, p)
+func run(args []string, output, diagnostics io.Writer) error {
+	executable, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("locate the Portprog executable: %w", err)
+	}
+	options := commandOptions{}
+	flags := flag.NewFlagSet("portprog", flag.ContinueOnError)
+	flags.SetOutput(diagnostics)
+	flags.StringVar(&options.root, "root", filepath.Dir(executable), "Portable installation directory containing portprog.json, profiles, cache and installs")
+	flags.StringVar(&options.profile, "profile", "", "Select profiles/NAME.json; defaults to default_profile in portprog.json")
+	flags.StringVar(&options.file, "file", "", "Install one recipe; relative paths are resolved from the caller's working directory")
+	flags.BoolVar(&options.validate, "validate", false, "Validate the complete recipe catalog and every profile locally, then exit")
+	flags.BoolVar(&options.lock, "lock", false, "Resolve selected recipes and save verified artifacts in portprog.lock.json without installing")
+	flags.BoolVar(&options.offline, "offline", false, "Use only the existing lockfile and verified local cache; never resolve remote artifacts")
+	flags.BoolVar(&options.noInstall, "no-install", false, "Regenerate activation from existing receipts without downloads or changes to installed files")
+	flags.BoolVar(&options.noGcc, "no-gcc", false, "Exclude GCC compiler recipes from package selection")
+	flags.BoolVar(&options.noGo, "no-golang", false, "Exclude Go compiler recipes from package selection")
+	flags.BoolVar(&options.noGit, "no-git", false, "Exclude recipes requiring Git source fetching")
+	flags.BoolVar(&options.devel, "devel", false, "Select only recipes in packages-develop and their declared dependencies")
+	flags.StringVar(&options.bundle, "bundle", "", "After successful installation, export a new directory containing verified offline installation images")
+	flags.BoolVar(&options.repair, "repair", false, "Verify installed receipts and reinstall damaged packages from their recorded artifacts")
+	flags.BoolVar(&options.list, "list", false, "List installed package identities and verify their recorded files without modifying them")
+	flags.StringVar(&options.remove, "remove", "", "Remove an installed package ID from activation and preserve its files under retired")
+	flags.BoolVar(&options.selfTest, "test", false, "Run a complete local archive installation, relocation and offline repair check, then exit")
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("unexpected positional arguments %q; use --help to see supported options", flags.Args())
+	}
+	if err := validateOptions(options); err != nil {
+		return err
+	}
+	root, err := filepath.Abs(options.root)
+	if err != nil {
+		return fmt.Errorf("resolve installation directory %q: %w", options.root, err)
+	}
+	if err := validateRoot(root); err != nil {
+		return err
+	}
+	settings, err := loadSettings(root)
+	if err != nil {
+		return err
+	}
+	if options.profile == "" {
+		options.profile = settings.DefaultProfile
+	}
+	b := configuration(root, settings, output)
+	b.Offline = b.Offline || options.offline
+	if options.selfTest {
+		return selfTest(b)
+	}
+	if options.validate {
+		return validateCatalogAndProfiles(b)
+	}
+	if options.noInstall {
+		return activateInstalled(b)
+	}
+	if options.list {
+		return listInstalled(b)
+	}
+	if options.remove != "" {
+		return removeInstalled(b, options.remove)
+	}
+	if options.repair {
+		return repairInstalled(b)
+	}
+	selectedExplicitly := options.file != "" || options.devel
+	flags.Visit(func(item *flag.Flag) {
+		if item.Name == "profile" {
+			selectedExplicitly = true
+		}
+	})
+	return installSelected(b, options, selectedExplicitly)
+}
+
+func validateOptions(options commandOptions) error {
+	modes := 0
+	for _, active := range []bool{options.validate, options.lock, options.noInstall, options.repair, options.list, options.remove != "", options.selfTest} {
+		if active {
+			modes++
+		}
+	}
+	if modes > 1 {
+		return fmt.Errorf("select exactly one of --validate, --lock, --no-install, --repair, --list, --remove or --test")
+	}
+	if options.file != "" && (options.devel || options.profile != "") || options.devel && options.profile != "" {
+		return fmt.Errorf("--file, --profile and --devel select different package sources; specify only one")
+	}
+	if options.bundle != "" && modes != 0 {
+		return fmt.Errorf("--bundle accompanies installation and cannot be combined with a separate operation")
+	}
+	return nil
+}
+
+func validateRoot(root string) error {
+	if strings.ContainsAny(root, "\r\n\x00") || strings.ContainsRune(root, os.PathListSeparator) {
+		return fmt.Errorf("installation directory %q contains a control character or the PATH separator %q", root, string(os.PathListSeparator))
+	}
+	return nil
+}
+
+func configuration(root string, settings Settings, output io.Writer) Config {
+	return Config{
+		RootDir: root, InstallDir: filepath.Join(root, "installs"), SourceDir: filepath.Join(root, "src"),
+		GoPath: filepath.Join(root, "langlibs", "gopath"), ZipDir: filepath.Join(root, "zips"),
+		TempDir: filepath.Join(root, "temp"), OS: runtime.GOOS, Arch: runtime.GOARCH,
+		Offline: settings.Offline, HTTPTimeout: time.Duration(settings.HTTPTimeoutSecs) * time.Second,
+		MaxDownloadBytes: settings.MaxDownloadBytes, MaxExtractBytes: settings.MaxExtractBytes, Output: output,
+	}
+}
+
+func installSelected(b Config, options commandOptions, selectedExplicitly bool) error {
+	lockPath := filepath.Join(b.RootDir, "portprog.lock.json")
+	lock, err := readLock(lockPath, b)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if b.Offline {
+		if err != nil {
+			return fmt.Errorf("offline installation requires lockfile %s: %w", lockPath, err)
+		}
+		if options.lock || selectedExplicitly {
+			return fmt.Errorf("offline installation replays %s; package selection and --lock require online resolution", lockPath)
+		}
+	} else if options.lock || selectedExplicitly || errors.Is(err, os.ErrNotExist) {
+		packages, selectionErr := selectedPackages(b, options)
+		if selectionErr != nil {
+			return selectionErr
+		}
+		lock, err = resolveLock(b, options.profile, packages)
+		if err != nil {
+			return err
+		}
+		if err := writeJSONAtomic(lockPath, lock); err != nil {
+			return err
+		}
+		logLockSaved(b.Output, lockPath, len(lock.Packages))
+	}
+	lock.Packages, err = filterLocked(lock.Packages, options)
+	if err != nil {
+		return err
+	}
+	if options.lock {
+		return nil
+	}
+	if err := ensureInstallationDirectories(b); err != nil {
+		return err
+	}
+	for _, p := range lock.Packages {
+		receipt, readErr := readReceipt(filepath.Join(b.InstallDir, p.Package.Name), b)
+		if readErr == nil && receipt.Package.SHA256 == p.SHA256 && packagesEqual(receipt.Package.Package, p.Package) {
+			if verifyErr := verifyReceipt(filepath.Join(b.InstallDir, p.Package.Name), receipt); verifyErr == nil {
+				logInstalled(b.Output, p.Package)
+				continue
+			}
+		} else if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
+			return readErr
+		}
+		logInstalling(b.Output, p.Package, filepath.Join(b.InstallDir, p.Package.Name))
+		if err := installPackage(b, p); err != nil {
+			return fmt.Errorf("install %s (%s): %w", p.Package.ID, p.Package.Version, err)
+		}
+		logInstalled(b.Output, p.Package)
+	}
+	if err := activateInstalled(b); err != nil {
+		return err
+	}
+	if options.bundle != "" {
+		return exportBundle(b, lock, options.bundle)
+	}
+	return nil
+}
+
+func ensureInstallationDirectories(b Config) error {
+	for _, path := range []string{b.RootDir, b.InstallDir, b.ZipDir, b.TempDir, b.GoPath} {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return fmt.Errorf("create installation directory %s: %w", path, err)
+		}
+	}
+	return nil
 }

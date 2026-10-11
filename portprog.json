@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "default_profile": "default",
+  "offline": false,
+  "http_timeout_seconds": 120,
+  "max_download_bytes": 8589934592,
+  "max_extract_bytes": 17179869184
+}
