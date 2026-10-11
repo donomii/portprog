@@ -4,6 +4,10 @@
     "Url"   :   "https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	"Type"  :   "Application",
-	"BinDir":	"/bin"
+	"Type"  :   "application",
+	"BinDir":	"bin",
+    "ID": "windows-cmake-3.7.2",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "3.7.2"
 }

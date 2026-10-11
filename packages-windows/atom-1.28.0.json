@@ -5,5 +5,8 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/Atom"
+	"BinDir":	"Atom",
+    "ID": "windows-atom-1.28.0",
+    "OS": "windows",
+    "Arch": "386"
 }

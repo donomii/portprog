@@ -4,5 +4,9 @@
     "Url"   :   "https://gitlab.com/donomii/racketprogs",
 	"Fetch" :	"git",
 	"Branch" : "master",
-    "Plan"  :   "gitAndMake"
+    "Plan"  :   "gitAndMake",
+    "ID": "windows-racketprogs",
+    "OS": "windows",
+    "Arch": "all",
+    "Type": "source"
 }

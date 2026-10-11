@@ -1,9 +1,13 @@
 {
     "Name"  :   "aws-cli",
-    "Zip"   :   "AWSCLI32.msi",
-    "Url"   :   "https://atom.io/download/mac",
+    "Zip"   :   "AWSCLIV2.pkg",
+    "Url"   :   "https://awscli.amazonaws.com/AWSCLIV2.pkg",
 	"Fetch" :	"web",
-    "Plan"  :   "msi",
+    "Plan"  :   "pkg",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	"aws-cli",
+    "ID": "darwin-aws-cli",
+    "OS": "darwin",
+    "Arch": "all",
+    "Version": "2"
 }

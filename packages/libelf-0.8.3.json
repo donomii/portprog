@@ -1,7 +1,12 @@
 {
     "Name"  :   "libelf-0.8.13",
     "Zip"   :   "libelf-0.8.13.tar.gz",
-    "Url"   :   "http://www.mr511.de/software/libelf-0.8.13.tar.gz",
+    "Url"   :   "https://ftp.osuosl.org/pub/blfs/conglomeration/libelf/libelf-0.8.13.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "standardConfigure"
+    "Plan"  :   "standardConfigure",
+    "ID": "linux-libelf-0.8.3",
+    "OS": "linux",
+    "Arch": "all",
+    "Type": "source",
+    "Version": "0.8.13"
 }

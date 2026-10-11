@@ -5,5 +5,10 @@
     "Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
     "Type"  :   "application",
-    "BinDir":	"/bin"
+    "BinDir":	"bin",
+    "ID": "darwin-go-1.17.5",
+    "OS": "darwin",
+    "Arch": "amd64",
+    "Version": "1.17.5",
+    "ArchiveRoot": "go"
 }

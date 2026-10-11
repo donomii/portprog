@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "msi",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-python-2.7.15",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "2.7.15"
 }

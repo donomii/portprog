@@ -1,9 +1,13 @@
 {
     "Name"  :   "neko-2.1.0",
     "Zip"   :   "neko-2.1.0-win.zip",
-    "Url"   :   "http://nekovm.org/media/neko-2.1.0-win.zip",
+    "Url"   :   "https://nekovm.org/media/neko-2.1.0-win.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-neko-2.1.0",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "2.1.0"
 }

@@ -1,8 +1,13 @@
 {
-    "Name"  :   "nim-3.7.2",
+    "Name"  :   "nim-0.17.2",
     "Zip"   :   "nim-0.17.2_x64.zip",
     "Url"   :   "https://nim-lang.org/download/nim-0.17.2_x64.zip",
 	  "Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	  "Type"  :   "Application"
+	  "Type"  :   "application",
+    "ID": "windows-nim-0.17.2",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "0.17.2",
+    "BinDir": "bin"
 }

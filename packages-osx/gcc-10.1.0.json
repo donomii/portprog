@@ -1,9 +1,14 @@
 {
     "Name"  :   "gcc-10.1.0",
-    "Zip"   :   "https://ftpmirror.gnu.org/gcc/gcc-10.1.0/gcc-10.1.0.tar.xz",
+    "Zip"   :   "gcc-10.1.0.tar.xz",
     "Url"   :   "https://ftpmirror.gnu.org/gcc/gcc-10.1.0/gcc-10.1.0.tar.xz",
     "Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory",
-    "Type"  :   "application",
-    "BinDir":	"/bin"
+    "Plan"  :   "standardConfigure",
+    "Type"  :   "source",
+    "BinDir":	"bin",
+    "ID": "darwin-gcc-10.1.0",
+    "OS": "darwin",
+    "Arch": "all",
+    "Version": "10.1.0",
+    "ArchiveRoot": "gcc-10.1.0"
 }

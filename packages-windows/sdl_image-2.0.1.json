@@ -3,5 +3,9 @@
     "Zip"   :   "SDL2_image-devel-2.0.1-mingw.tar.gz",
     "Url"   :   "https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.1-mingw.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory"
+    "Plan"  :   "zipWithDirectory",
+    "ID": "windows-sdl_image-2.0.1",
+    "OS": "windows",
+    "Arch": "all",
+    "Version": "2.0.1"
 }

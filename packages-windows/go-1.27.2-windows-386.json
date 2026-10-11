@@ -1,0 +1,15 @@
+{
+    "ID": "go-1.27.2-windows-386",
+    "Name": "go-1.27.2-windows-386",
+    "Version": "1.27.2",
+    "OS": "windows",
+    "Arch": "386",
+    "Zip": "go1.27.2.windows-386.zip",
+    "Url": "https://go.dev/dl/go1.27.2.windows-386.zip",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "Type": "application",
+    "ArchiveRoot": "go",
+    "BinDir": "bin",
+    "SHA256": "b41f5abfa012399752aea010839c8fd1f66283cd0ea83c864a7a9693ceff8fae"
+}

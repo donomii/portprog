@@ -1,0 +1,15 @@
+{
+    "ID": "go-1.27.2-darwin-arm64",
+    "Name": "go-1.27.2-darwin-arm64",
+    "Version": "1.27.2",
+    "OS": "darwin",
+    "Arch": "arm64",
+    "Zip": "go1.27.2.darwin-arm64.tar.gz",
+    "Url": "https://go.dev/dl/go1.27.2.darwin-arm64.tar.gz",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "Type": "application",
+    "ArchiveRoot": "go",
+    "BinDir": "bin",
+    "SHA256": "76812b213b1b2302c978d28fa52fa92d541704b9e7d9d5db8002c50e4018c4c5"
+}

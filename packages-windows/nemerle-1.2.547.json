@@ -1,9 +1,13 @@
 {
     "Name"  :   "NemerleBinaries-net-4.0-v1.2.547.0",
-    "Zip"   :   "NemerleBinaries-net-4.0-v1.2.547.0",
-    "Url"   :   "http://nemerle.org/Download/Nightly%20master-NET40-VS2010/build-283/NemerleBinaries-net-4.0-v1.2.547.0.zip",
+    "Zip"   :   "NemerleBinaries-net-4.0-v1.2.547.0.zip",
+    "Url"   :   "https://nemerle.org/Download/Nightly%20master-NET40-VS2010/build-283/NemerleBinaries-net-4.0-v1.2.547.0.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-nemerle-1.2.547",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "4.0"
 }

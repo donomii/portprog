@@ -1,9 +1,14 @@
 {
-    "Name"  :   "wget",
+    "Name"  :   "wget-1.11.4",
     "Zip"   :   "wget-1.11.4-1-bin.zip",
     "Url"   :   "https://downloads.sourceforge.net/project/gnuwin32/wget/1.11.4-1/wget-1.11.4-1-bin.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-wget-1.11.4",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "1.11.4",
+    "Dependencies": ["windows-wget-dep-1.11.4"]
 }

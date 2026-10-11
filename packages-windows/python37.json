@@ -5,6 +5,10 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDirs":	["/", "Scripts"],
-	"Deletes": ["python37._pth"]
+	"BinDirs":	[".", "Scripts"],
+	"Deletes": ["python37._pth"],
+    "ID": "windows-python37",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "3.7.1rc1"
 }

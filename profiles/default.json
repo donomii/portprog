@@ -1,0 +1,29 @@
+{
+    "description": "Install one Go 1.27.2 toolchain matching this operating system and processor. Published SHA256 hashes verify every archive.",
+    "packages": {
+        "darwin/amd64": [
+            "go-1.27.2-darwin-amd64"
+        ],
+        "darwin/arm64": [
+            "go-1.27.2-darwin-arm64"
+        ],
+        "linux/386": [
+            "go-1.27.2-linux-386"
+        ],
+        "linux/amd64": [
+            "go-1.27.2-linux-amd64"
+        ],
+        "linux/arm64": [
+            "go-1.27.2-linux-arm64"
+        ],
+        "windows/386": [
+            "go-1.27.2-windows-386"
+        ],
+        "windows/amd64": [
+            "go-1.27.2-windows-amd64"
+        ],
+        "windows/arm64": [
+            "go-1.27.2-windows-arm64"
+        ]
+    }
+}

@@ -1,6 +1,10 @@
 {
     "Name"  :   "DBUS",
-    "Url"   :   "git://anongit.freedesktop.org/git/dbus/dbus",
+    "Url"   :   "https://gitlab.freedesktop.org/dbus/dbus",
 	"Fetch" :	"git",
-    "Plan"  :   "standardConfigure"
+    "Plan"  :   "standardConfigure",
+    "ID": "linux-dbus-git",
+    "OS": "linux",
+    "Arch": "all",
+    "Type": "source"
 }

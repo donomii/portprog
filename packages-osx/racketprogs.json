@@ -4,5 +4,9 @@
     "Url"   :   "https://gitlab.com/donomii/racketprogs",
 	"Fetch" :	"git",
 	"Branch" : "master",
-    "Plan"  :   "gitAndMake"
+    "Plan"  :   "gitAndMake",
+    "ID": "darwin-racketprogs",
+    "OS": "darwin",
+    "Arch": "all",
+    "Type": "source"
 }

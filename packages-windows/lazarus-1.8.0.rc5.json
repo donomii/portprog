@@ -4,5 +4,9 @@
     "Url"   :   "https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/Lazarus%201.8.0RC5/lazarus-1.8.0-RC5.zip/download",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application"
+	"Type"  :   "application",
+    "ID": "windows-lazarus-1.8.0.rc5",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "1.8.0"
 }

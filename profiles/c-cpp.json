@@ -1,0 +1,22 @@
+{
+    "description": "C and C++ development packages. Linux source builds require an existing compiler, make, and the package build prerequisites; macOS GCC additionally requires its upstream build prerequisites.",
+    "packages": {
+        "linux/all": [
+            "linux-cmake-3.7.2",
+            "linux-libelf-0.8.3",
+            "linux-sdl-2.0.5",
+            "linux-zeromq-4.2.1"
+        ],
+        "darwin/all": [
+            "darwin-gcc-10.1.0"
+        ],
+        "windows/amd64": [
+            "windows-gcc-8.1.0_x86_64",
+            "windows-cmake-3.7.2"
+        ],
+        "windows/386": [
+            "windows-gcc-7.2.0_i686",
+            "windows-cmake"
+        ]
+    }
+}

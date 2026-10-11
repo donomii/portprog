@@ -4,5 +4,9 @@
     "Url"   :   "https://notepad-plus-plus.org/repository/7.x/7.5.1/npp.7.5.1.bin.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application"
+	"Type"  :   "application",
+    "ID": "windows-notepadplusplus",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "7.5.1"
 }

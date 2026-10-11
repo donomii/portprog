@@ -3,4 +3,9 @@
     "Url"   :   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
 	"Fetch" :	"web",
 	"Type"  :   "data",
+    "ID": "data-monthly-earthquakes",
+    "OS": "all",
+    "Arch": "all",
+    "Zip": "earthquakes-last-month.geojson",
+    "Plan": "rawData"
 }
