@@ -141,6 +141,51 @@ func TestWorkflowReservationPreventsMutation(t *testing.T) {
 	}
 }
 
+func TestWorkflowRejectsMovingInstalledIdentity(t *testing.T) {
+	root, recipe, _ := workflowFixture(t)
+	workflowRun(t, root, "--file", recipe)
+	before := workflowSnapshot(t, filepath.Join(root, "installs"))
+	lockBefore := workflowRead(t, filepath.Join(root, "portprog.lock.json"))
+	var replacement Package
+	if err := json.Unmarshal(workflowRead(t, recipe), &replacement); err != nil {
+		t.Fatal(err)
+	}
+	replacement.Name = "fixture-v2"
+	data, err := json.Marshal(replacement)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(recipe, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := workflowCommand(root, "--file", recipe); err == nil || !strings.Contains(err.Error(), "fixture") {
+		t.Fatalf("changing installed fixture directory returned %v; expected ownership conflict", err)
+	}
+	if after := workflowSnapshot(t, filepath.Join(root, "installs")); !reflect.DeepEqual(before, after) {
+		t.Fatalf("ownership conflict modified installed directories: before %v; after %v", before, after)
+	}
+	if after := workflowRead(t, filepath.Join(root, "portprog.lock.json")); !bytes.Equal(lockBefore, after) {
+		t.Fatal("ownership conflict replaced the previously valid lockfile")
+	}
+	workflowReservationReleased(t, root)
+}
+
+func TestWorkflowRejectsIrrelevantSelectors(t *testing.T) {
+	for _, arguments := range [][]string{
+		{"--repair", "--no-golang"}, {"--list", "--file", "unused.json"}, {"--no-install", "--profile", "unused"},
+		{"--validate", "--no-gcc"}, {"--remove", "fixture", "--devel"}, {"--test", "--no-git"},
+	} {
+		root := t.TempDir()
+		before := workflowSnapshot(t, root)
+		if _, err := workflowCommand(root, arguments...); err == nil {
+			t.Errorf("accepted ignored selector in %q", arguments)
+		}
+		if after := workflowSnapshot(t, root); !reflect.DeepEqual(before, after) {
+			t.Errorf("invalid option combination %q modified its root", arguments)
+		}
+	}
+}
+
 func TestWorkflowCatalogValidationDoesNotInstall(t *testing.T) {
 	root, _, archive := workflowFixture(t)
 	if err := os.Rename(archive, archive+".retained"); err != nil {
