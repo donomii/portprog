@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"unicode/utf16"
 )
 
 func TestEnvironmentPathsUseInstalledDirectories(t *testing.T) {
@@ -74,8 +76,8 @@ func relocatedEnvironment(t *testing.T) (string, string) {
 	t.Helper()
 	parent := t.TempDir()
 	original := filepath.Join(parent, "original")
-	root := filepath.Join(parent, "moved & (portable) %ROOT% ! dollar$ 'quote'")
-	packageName := "Tool & suite's $% (x)!"
+	root := filepath.Join(parent, "moved 工具 café & (portable) %ROOT% ! dollar$ 'quote'")
+	packageName := "Tool 工具 café & suite's $% (x)!"
 	if err := os.Mkdir(original, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -114,25 +116,36 @@ func testFishActivation(t *testing.T, root, packageName string) {
 
 func testPowerShellActivation(t *testing.T, root, packageName, executable string) {
 	command := exec.Command(executable, "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command",
-		"$ErrorActionPreference = 'Stop'; . $env:PORTPROG_ACTIVATION; . $env:PORTPROG_ACTIVATION; [Console]::WriteLine($env:GOPATH); [Console]::WriteLine($env:PATH)")
+		"$ErrorActionPreference = 'Stop'; [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); . $env:PORTPROG_ACTIVATION; . $env:PORTPROG_ACTIVATION; [Console]::WriteLine($env:GOPATH); [Console]::WriteLine($env:PATH)")
 	command.Env = append(os.Environ(), "PORTPROG_ACTIVATION="+filepath.Join(root, "environment.ps1"))
 	checkActivation(t, command, root, packageName)
 }
 
 func testBatchActivation(t *testing.T, root, packageName string) {
-	command := exec.Command("cmd.exe", "/D", "/V:OFF", "/Q")
+	command := exec.Command("cmd.exe", "/D", "/V:OFF", "/Q", "/U")
 	command.Env = append(os.Environ(), "PORTPROG_ACTIVATION="+filepath.Join(root, "environment.bat"))
-	command.Stdin = strings.NewReader("\"%PORTPROG_ACTIVATION%\"\r\n\"%PORTPROG_ACTIVATION%\"\r\nset GOPATH\r\nset PATH\r\n")
+	command.Stdin = strings.NewReader("for /f \"tokens=2 delims=:\" %C in ('chcp') do for %N in (%C) do set PORTPROG_CODEPAGE_BEFORE=%N\r\n\"%PORTPROG_ACTIVATION%\"\r\nif errorlevel 1 exit /b 1\r\n\"%PORTPROG_ACTIVATION%\"\r\nif errorlevel 1 exit /b 1\r\nfor /f \"tokens=2 delims=:\" %C in ('chcp') do for %N in (%C) do set PORTPROG_CODEPAGE_AFTER=%N\r\nset PORTPROG_CODEPAGE_\r\nset GOPATH\r\nset PATH\r\n")
 	output, err := command.CombinedOutput()
+	if len(output)%2 != 0 {
+		t.Fatalf("Command Prompt returned %d bytes; expected UTF-16 output: %q", len(output), output)
+	}
+	characters := make([]uint16, len(output)/2)
+	for index := range characters {
+		characters[index] = binary.LittleEndian.Uint16(output[index*2:])
+	}
+	text := string(utf16.Decode(characters))
 	if err != nil {
-		t.Fatalf("Command Prompt activation failed: %v\n%s", err, output)
+		t.Fatalf("Command Prompt activation failed: %v\n%s", err, text)
 	}
 	values := map[string]string{}
-	for _, line := range strings.Split(strings.ReplaceAll(string(output), "\r\n", "\n"), "\n") {
+	for _, line := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
 		name, value, found := strings.Cut(line, "=")
 		if found {
 			values[strings.ToUpper(name)] = value
 		}
+	}
+	if values["PORTPROG_CODEPAGE_BEFORE"] == "" || values["PORTPROG_CODEPAGE_BEFORE"] != values["PORTPROG_CODEPAGE_AFTER"] {
+		t.Errorf("Command Prompt code page changed: before %q, after %q", values["PORTPROG_CODEPAGE_BEFORE"], values["PORTPROG_CODEPAGE_AFTER"])
 	}
 	checkActivationValues(t, values["GOPATH"], values["PATH"], root, packageName, os.Getenv("PATH"))
 }

@@ -167,6 +167,9 @@ func batchEnvironment(paths []string) string {
 	script.WriteString("if \"!\"==\"\" (\n  echo Portprog activation requires Command Prompt delayed expansion to be disabled so paths containing exclamation marks remain intact. 1>&2\n  exit /b 1\n)\n")
 	script.WriteString("set \"_portprog_root=%~dp0\"\n")
 	script.WriteString("if not \"%_portprog_root:;=%\"==\"%_portprog_root%\" (\n  echo Portprog root \"%_portprog_root%\" contains a semicolon and cannot be represented in PATH. 1>&2\n  set \"_portprog_root=\"\n  exit /b 1\n)\n")
+	script.WriteString("set \"_portprog_codepage=\"\nfor /f \"tokens=2 delims=:\" %%C in ('chcp') do for %%N in (%%C) do set \"_portprog_codepage=%%N\"\n")
+	script.WriteString("if not defined _portprog_codepage (\n  echo Portprog activation could not read the current Command Prompt code page. 1>&2\n  set \"_portprog_root=\"\n  exit /b 1\n)\n")
+	script.WriteString("chcp 65001 >nul\nif errorlevel 1 (\n  echo Portprog activation could not select UTF-8 code page 65001 for package paths. 1>&2\n  set \"_portprog_root=\"\n  set \"_portprog_codepage=\"\n  exit /b 1\n)\n")
 	script.WriteString("set \"GOPATH=%~dp0langlibs\\gopath\"\n")
 	script.WriteString("set \"_portprog_existing=%PATH:\"=%\"\n")
 	for i := len(paths) - 1; i >= 0; i-- {
@@ -175,13 +178,14 @@ func batchEnvironment(paths []string) string {
 		fmt.Fprintf(&script, "for %%%%P in (\"%%_portprog_existing:;=\" \"%%\") do if /I \"%%%%~P\"==\"%%~dp0%s\" set \"_portprog_present=1\"\n", relative)
 		fmt.Fprintf(&script, "if not defined _portprog_present set \"PATH=%%~dp0%s;%%PATH%%\"\n", relative)
 	}
-	script.WriteString("set \"_portprog_root=\"\nset \"_portprog_existing=\"\nset \"_portprog_present=\"\nexit /b 0\n")
+	script.WriteString("set \"_portprog_root=\"\nset \"_portprog_existing=\"\nset \"_portprog_present=\"\n")
+	script.WriteString("chcp %_portprog_codepage% >nul\nif errorlevel 1 (\n  echo Portprog activation could not restore Command Prompt code page %_portprog_codepage%. 1>&2\n  set \"_portprog_codepage=\"\n  exit /b 1\n)\nset \"_portprog_codepage=\"\nexit /b 0\n")
 	return strings.ReplaceAll(script.String(), "\n", "\r\n")
 }
 
 func powershellEnvironment(paths []string) string {
 	var script strings.Builder
-	script.WriteString("# Dot-source this file to use this portable installation in the current PowerShell session.\n")
+	script.WriteString("\ufeff# Dot-source this file to use this portable installation in the current PowerShell session.\n")
 	script.WriteString("$portprogRoot = $PSScriptRoot\n")
 	script.WriteString("if ($portprogRoot.IndexOf([IO.Path]::PathSeparator) -ge 0) {\n  throw \"Portprog root '$portprogRoot' contains the PATH separator and cannot be represented in PATH.\"\n}\n")
 	script.WriteString("$env:GOPATH = Join-Path $portprogRoot 'langlibs/gopath'\n")

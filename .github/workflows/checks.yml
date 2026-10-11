@@ -33,6 +33,22 @@ jobs:
       - name: Install Fish for macOS activation checks
         if: runner.os == 'macOS'
         run: brew install fish
+      - name: Prepare GNU make and shell utilities for Windows source builds
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msysBin = 'C:\msys64\usr\bin'
+          $pacman = Join-Path $msysBin 'pacman.exe'
+          if (-not (Test-Path -LiteralPath $pacman -PathType Leaf)) { throw "MSYS2 package manager is missing: $pacman" }
+          & $pacman --sync --refresh --needed --noconfirm make bash coreutils
+          if ($LASTEXITCODE -ne 0) { throw "MSYS2 build prerequisite installation failed with status $LASTEXITCODE" }
+          foreach ($tool in @('make', 'sh', 'mkdir', 'cp', 'printf', 'false', 'true')) {
+            $executable = Join-Path $msysBin "$tool.exe"
+            if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) { throw "Required Windows build tool is missing: $executable" }
+            & $executable --version
+            if ($LASTEXITCODE -ne 0) { throw "Required Windows build tool failed: $executable, status $LASTEXITCODE" }
+          }
+          $msysBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Test, build, validate catalogs and run the local installation check
         if: runner.os != 'Windows'
         env:

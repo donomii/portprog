@@ -1,13 +1,19 @@
 @echo off
-setlocal DisableDelayedExpansion
-cd /d "%~dp0"
+setlocal EnableExtensions DisableDelayedExpansion
+pushd "%~dp0"
+if errorlevel 1 exit /b %errorlevel%
 if not exist updater.go goto run
 go build -o portprog.exe .
-if errorlevel 1 exit /b %errorlevel%
+if errorlevel 1 goto finish
 :run
 if not exist portprog.exe (
   echo Portprog launcher expected "%~dp0portprog.exe" or buildable source "%~dp0updater.go"; neither is available. 1>&2
-  exit /b 1
+  set "_portprog_status=1"
+  goto cleanup
 )
 portprog.exe %*
-exit /b %errorlevel%
+:finish
+set "_portprog_status=%errorlevel%"
+:cleanup
+popd
+exit /b %_portprog_status%
