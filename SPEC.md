@@ -78,6 +78,10 @@ The default profile contains a current Go toolchain. The C/C++ and scripting pro
 
 Native ZIP, gzip-compressed tar, bzip2-compressed tar and tar extraction use local archive readers. Other archive formats require a suitable already installed extractor; Portprog does not download and execute an extractor installer. Native installer plans extract payloads into staging rather than perform a system installation. Source build plans require host tools and remain subject to upstream build-system behavior. A source program that embeds absolute paths needs upstream relocation support; generating a relative activation script cannot make such a program relocatable by itself.
 
+On Windows, configure and CMake builds install into a staging prefix because Unix `DESTDIR` cannot represent a Windows drive prefix. Programs that embed that prefix need upstream relocation support. On Unix, these builds use the final installation prefix with a separate staging root.
+
+Staging is not a sandbox: source builds and MSI administrative actions execute upstream code. Native package tools may expand temporary files before Portprog checks the payload-copy size limit. Package recipes and executable payloads therefore remain trusted inputs even when their downloads are pinned by hash.
+
 Failed directory selection never falls through to a different directory. Download, archive, command and publication errors include the affected package/path and the underlying failure. A package is not reported installed until its payload and receipt have been published.
 
 ## On-disk records

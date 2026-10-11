@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -19,14 +20,14 @@ func downloadLimit(b Config) int64 {
 	if b.MaxDownloadBytes > 0 {
 		return b.MaxDownloadBytes
 	}
-	return 4 << 30
+	return defaultSettings().MaxDownloadBytes
 }
 
 func extractionLimit(b Config) int64 {
 	if b.MaxExtractBytes > 0 {
 		return b.MaxExtractBytes
 	}
-	return 16 << 30
+	return defaultSettings().MaxExtractBytes
 }
 
 func validDigest(digest string) bool {
@@ -114,6 +115,20 @@ func cacheArtifact(b Config, source io.Reader, expected string) (string, int64, 
 	return digest, written, nil
 }
 
+func localArtifactPath(address *url.URL, windows bool) (string, error) {
+	filename := address.Path
+	if windows {
+		if len(filename) < 4 || filename[0] != '/' || filename[2] != ':' || filename[3] != '/' || !((filename[1] >= 'A' && filename[1] <= 'Z') || (filename[1] >= 'a' && filename[1] <= 'z')) {
+			return "", fmt.Errorf("Windows file URL %q must include an absolute drive path such as file:///C:/packages/archive.zip", address)
+		}
+		return strings.ReplaceAll(filename[1:], "/", "\\"), nil
+	}
+	if !filepath.IsAbs(filename) {
+		return "", fmt.Errorf("file URL %q must contain an absolute local path", address)
+	}
+	return filepath.FromSlash(filename), nil
+}
+
 func artifactURL(raw string) (*url.URL, error) {
 	parsed, err := url.Parse(raw)
 	if err != nil {
@@ -125,14 +140,18 @@ func artifactURL(raw string) (*url.URL, error) {
 	if parsed.Scheme == "https" && parsed.Host != "" {
 		return parsed, nil
 	}
-	if parsed.Scheme == "file" && (parsed.Host == "" || parsed.Host == "localhost") && parsed.RawQuery == "" && filepath.IsAbs(parsed.Path) {
-		return parsed, nil
+	if parsed.Scheme == "file" && (parsed.Host == "" || parsed.Host == "localhost") && parsed.RawQuery == "" {
+		if _, err := localArtifactPath(parsed, runtime.GOOS == "windows"); err == nil {
+			return parsed, nil
+		}
 	}
 	return nil, fmt.Errorf("artifact URL %q must use HTTPS or an absolute local file:// URL", raw)
 }
 
 func resolvePackage(b Config, p Package) (LockedPackage, error) {
 	locked := LockedPackage{Package: p}
+	commit, commitErr := hex.DecodeString(p.Branch)
+	exactCommit := commitErr == nil && (len(commit) == 20 || len(commit) == 32)
 	if p.SHA256 != "" {
 		if !validDigest(p.SHA256) {
 			return locked, fmt.Errorf("package %q: invalid SHA256 %q", p.Name, p.SHA256)
@@ -143,8 +162,13 @@ func resolvePackage(b Config, p Package) (LockedPackage, error) {
 			if err != nil {
 				return locked, err
 			}
-			locked.SHA256, locked.Size = p.SHA256, info.Size()
-			return locked, nil
+			if p.Fetch != "git" || exactCommit {
+				locked.SHA256, locked.Size = p.SHA256, info.Size()
+				if p.Fetch == "git" {
+					locked.Commit = p.Branch
+				}
+				return locked, nil
+			}
 		} else if !errors.Is(err, os.ErrNotExist) {
 			return locked, err
 		}
@@ -163,7 +187,11 @@ func resolvePackage(b Config, p Package) (LockedPackage, error) {
 		return locked, fmt.Errorf("package %q has unsupported fetch method %q", p.Name, p.Fetch)
 	}
 	if parsed.Scheme == "file" {
-		file, err := os.Open(filepath.FromSlash(parsed.Path))
+		filename, err := localArtifactPath(parsed, runtime.GOOS == "windows")
+		if err != nil {
+			return locked, err
+		}
+		file, err := os.Open(filename)
 		if err != nil {
 			return locked, fmt.Errorf("open local artifact %q: %w", parsed.Path, err)
 		}
@@ -176,7 +204,7 @@ func resolvePackage(b Config, p Package) (LockedPackage, error) {
 	}
 	timeout := b.HTTPTimeout
 	if timeout <= 0 {
-		timeout = 5 * time.Minute
+		timeout = time.Duration(defaultSettings().HTTPTimeoutSecs) * time.Second
 	}
 	client := &http.Client{Timeout: timeout, CheckRedirect: func(request *http.Request, previous []*http.Request) error {
 		if request.URL.Scheme != "https" || len(previous) >= 10 {

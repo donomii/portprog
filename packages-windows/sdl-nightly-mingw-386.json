@@ -1,0 +1,11 @@
+{
+    "Name": "sdl-nightly",
+    "Zip": "SDL2-devel-2.0.7-mingw.tar.gz",
+    "Url": "https://www.libsdl.org/release/SDL2-devel-2.0.7-mingw.tar.gz",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "ID": "windows-sdl-nightly-mingw-386",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "2.0.7"
+}

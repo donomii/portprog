@@ -26,7 +26,15 @@ import (
 func installerTestConfig(t *testing.T) Config {
 	t.Helper()
 	root := t.TempDir()
-	return Config{RootDir: root, ZipDir: filepath.Join(root, "cache"), TempDir: filepath.Join(root, "temp"), InstallDir: filepath.Join(root, "installs"), MaxDownloadBytes: 1 << 20, MaxExtractBytes: 1 << 20}
+	return Config{RootDir: root, ZipDir: filepath.Join(root, "cache"), TempDir: filepath.Join(root, "temp"), InstallDir: filepath.Join(root, "installs"), GoPath: filepath.Join(root, "langlibs", "gopath"), OS: runtime.GOOS, Arch: runtime.GOARCH, MaxDownloadBytes: 1 << 20, MaxExtractBytes: 1 << 20}
+}
+
+func installerTestFileURL(filename string) string {
+	name := filepath.ToSlash(filename)
+	if !strings.HasPrefix(name, "/") {
+		name = "/" + name
+	}
+	return (&url.URL{Scheme: "file", Path: name}).String()
 }
 
 func installerTestWrite(t *testing.T, filename string, contents []byte, mode os.FileMode) {
@@ -200,7 +208,7 @@ func TestResolveLocalArtifactAndOfflineCache(t *testing.T) {
 	config := installerTestConfig(t)
 	filename := filepath.Join(config.RootDir, "data.txt")
 	installerTestWrite(t, filename, []byte("local data"), 0644)
-	address := (&url.URL{Scheme: "file", Path: filepath.ToSlash(filename)}).String()
+	address := installerTestFileURL(filename)
 	requested := Package{Name: "data", Zip: "data.txt", Url: address, Fetch: "web", Plan: "rawData", SHA256: installerTestDigest([]byte("local data"))}
 	locked, err := resolvePackage(config, requested)
 	if err != nil {
@@ -307,15 +315,16 @@ func TestPinnedGitSnapshotAndSubmodule(t *testing.T) {
 	installerTestRun(t, library, "git", "commit", "-m", "First dependency revision")
 	source := filepath.Join(config.RootDir, "repository")
 	installerTestWrite(t, filepath.Join(source, "main.txt"), []byte("pinned parent"), 0644)
+	installerTestWrite(t, filepath.Join(source, "Makefile"), []byte("all:\n\ttrue\ninstall:\n\tmkdir -p '$(PREFIX)/dependency'\n\tcp main.txt '$(PREFIX)/main.txt'\n\tcp dependency/library.txt '$(PREFIX)/dependency/library.txt'\n"), 0644)
 	installerTestRun(t, source, "git", "init", "-b", "main")
 	installerTestRun(t, source, "git", "-c", "protocol.file.allow=always", "submodule", "add", library, "dependency")
-	installerTestRun(t, source, "git", "add", "main.txt", ".gitmodules", "dependency")
+	installerTestRun(t, source, "git", "add", "main.txt", "Makefile", ".gitmodules", "dependency")
 	installerTestRun(t, source, "git", "commit", "-m", "Parent with pinned dependency")
 	commit := installerTestRun(t, source, "git", "rev-parse", "HEAD")
 	installerTestWrite(t, filepath.Join(library, "library.txt"), []byte("new incompatible dependency"), 0644)
 	installerTestRun(t, library, "git", "add", "library.txt")
 	installerTestRun(t, library, "git", "commit", "-m", "Dependency changes independently")
-	requested := Package{Name: "source", Fetch: "git", Url: (&url.URL{Scheme: "file", Path: filepath.ToSlash(source)}).String(), Branch: "main", Plan: "zipWithNoDirectory"}
+	requested := Package{ID: "source", Name: "source", OS: "all", Arch: "all", Fetch: "git", Url: installerTestFileURL(source), Branch: "main", Plan: "gitAndMake"}
 	locked, err := resolvePackage(config, requested)
 	if err != nil {
 		t.Fatal(err)
@@ -328,15 +337,25 @@ func TestPinnedGitSnapshotAndSubmodule(t *testing.T) {
 		t.Fatalf("snapshot was not deterministic: first %s second %s error %v", locked.SHA256, second.SHA256, err)
 	}
 	config.Offline = true
-	if err := installPackage(config, locked); err != nil {
+	extracted := filepath.Join(config.RootDir, "offline-source")
+	if err := extractArchive(config, filepath.Join(config.ZipDir, locked.SHA256), "source.zip", extracted); err != nil {
 		t.Fatal(err)
 	}
-	content, err := os.ReadFile(filepath.Join(config.InstallDir, "source", "dependency", "library.txt"))
+	content, err := os.ReadFile(filepath.Join(extracted, "dependency", "library.txt"))
 	if err != nil || string(content) != "pinned dependency" {
 		t.Fatalf("submodule did not honor pinned revision: %q %v", content, err)
 	}
-	if _, err := os.Stat(filepath.Join(config.InstallDir, "source", ".git")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(extracted, ".git")); !os.IsNotExist(err) {
 		t.Fatalf("snapshot included Git metadata: %v", err)
+	}
+	if err := installPackage(config, locked); err == nil {
+		t.Fatal("accepted source build in offline mode")
+	}
+	pinned := requested
+	pinned.Branch, pinned.SHA256 = locked.Commit, locked.SHA256
+	fromCache, err := resolvePackage(config, pinned)
+	if err != nil || fromCache.Commit != locked.Commit {
+		t.Fatalf("cached Git resolution lost commit: %+v %v", fromCache, err)
 	}
 	installerTestWrite(t, filepath.Join(source, "main.txt"), []byte("later parent"), 0644)
 	installerTestRun(t, source, "git", "add", "main.txt")
@@ -354,6 +373,55 @@ func TestPinnedGitSnapshotAndSubmodule(t *testing.T) {
 	}
 }
 
+func TestWindowsFileURLPath(t *testing.T) {
+	address, err := url.Parse("file:///C:/Packages/My%20Archive.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	filename, err := localArtifactPath(address, true)
+	if err != nil || filename != "C:\\Packages\\My Archive.zip" {
+		t.Fatalf("Windows file URL: filename %q error %v", filename, err)
+	}
+	address.Path = "/relative/archive.zip"
+	if _, err := localArtifactPath(address, true); err == nil {
+		t.Fatal("accepted Windows local URL without a drive")
+	}
+}
+
+func TestInstallerSelectsReceiptDependencyBinary(t *testing.T) {
+	config := installerTestConfig(t)
+	config.MaxDownloadBytes = 64 << 20
+	current, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(current)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name := "portprog-receipt-tool"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	installed := filepath.Join(config.InstallDir, "tool")
+	binary := filepath.Join(installed, "bin", name)
+	installerTestWrite(t, binary, contents, 0755)
+	files, err := collectInstalledFiles(installed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	locked := LockedPackage{Package: Package{ID: "tool", Name: "tool", OS: "all", Arch: "all", Fetch: "web", Plan: "zipWithNoDirectory", Url: "https://example.invalid/tool.zip", Zip: "tool.zip", BinDir: "bin"}, SHA256: installerTestDigest(contents), Size: int64(len(contents))}
+	receipt, err := json.Marshal(Receipt{SchemaVersion: 1, Package: locked, Files: files})
+	if err != nil {
+		t.Fatal(err)
+	}
+	installerTestWrite(t, filepath.Join(installed, ".portprog-receipt.json"), receipt, 0644)
+	command, err := installerCommand(config, config.RootDir, nil, name)
+	if err != nil || command.Path != binary {
+		t.Fatalf("dependency executable lookup: command %+v error %v; expected %s", command, err, binary)
+	}
+}
+
 func TestConfigureAndCMakeStageInstallation(t *testing.T) {
 	config := installerTestConfig(t)
 	stage := filepath.Join(config.TempDir, "configure-build")
@@ -368,6 +436,9 @@ func TestConfigureAndCMakeStageInstallation(t *testing.T) {
 	}
 	content, err := os.ReadFile(filepath.Join(prefix, "bin", "program"))
 	expected := "built with prefix " + filepath.Join(config.InstallDir, "configured")
+	if runtime.GOOS == "windows" {
+		expected = "built with prefix " + filepath.ToSlash(filepath.Join(stage, "prefix"))
+	}
 	if err != nil || string(content) != expected {
 		t.Fatalf("configure installed wrong prefix: %q expected %q error %v", content, expected, err)
 	}
@@ -385,6 +456,65 @@ func TestConfigureAndCMakeStageInstallation(t *testing.T) {
 	content, err = os.ReadFile(filepath.Join(prefix, "bin", "program.txt"))
 	if err != nil || string(content) != "cmake installed file" {
 		t.Fatalf("cmake staging: %q %v", content, err)
+	}
+}
+
+func TestAutogenSourceBuild(t *testing.T) {
+	config := installerTestConfig(t)
+	stage := filepath.Join(config.TempDir, "autogen-build")
+	source := filepath.Join(stage, "source")
+	installerTestWrite(t, filepath.Join(source, "autogen.sh"), []byte("#!/bin/sh\nset -eu\nprintf 'prefix=%s\\n' \"${1#--prefix=}\" > prefix.mk\n"), 0755)
+	installerTestWrite(t, filepath.Join(source, "Makefile"), []byte("include prefix.mk\nall:\n\tprintf 'autogen configured' > program\ninstall:\n\tmkdir -p '$(DESTDIR)$(prefix)/bin'\n\tcp program '$(DESTDIR)$(prefix)/bin/program'\n"), 0644)
+	prefix, err := buildSource(config, Package{Name: "autogen", Plan: "standardConfigure"}, source, stage)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(filepath.Join(prefix, "bin", "program"))
+	if err != nil || string(content) != "autogen configured" {
+		t.Fatalf("autogen build produced %q: %v", content, err)
+	}
+}
+
+func TestMacPackagePayloadExtraction(t *testing.T) {
+	config := installerTestConfig(t)
+	if runtime.GOOS != "darwin" {
+		if _, err := prepareNativePackage(config, Package{Name: "pkg-fixture", Plan: "pkg"}, "unused.pkg", config.TempDir); err == nil || !strings.Contains(err.Error(), "requires macOS") {
+			t.Fatalf("expected macOS platform requirement, received %v", err)
+		}
+		return
+	}
+	payload := filepath.Join(config.RootDir, "package-payload")
+	installerTestWrite(t, filepath.Join(payload, "fixtures", "installed.txt"), []byte("local pkg payload\n"), 0644)
+	archive := filepath.Join(config.RootDir, "fixture.pkg")
+	if err := runInstallerCommand(config, config.RootDir, "pkgbuild", "--root", payload, "--identifier", "invalid.example.portprog.fixture", "--version", "1", "--install-location", "/", archive); err != nil {
+		t.Fatal(err)
+	}
+	recipe := Package{ID: "pkg-fixture", Name: "pkg-fixture", OS: "darwin", Arch: "all", Fetch: "web", Plan: "pkg", Zip: "fixture.pkg", Url: installerTestFileURL(archive)}
+	locked, err := resolvePackage(config, recipe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := installPackage(config, locked); err != nil {
+		t.Fatal(err)
+	}
+	installed := filepath.Join(config.InstallDir, "pkg-fixture")
+	content, err := os.ReadFile(filepath.Join(installed, "fixtures", "installed.txt"))
+	if err != nil || string(content) != "local pkg payload\n" {
+		t.Fatalf("pkg extraction produced %q: %v", content, err)
+	}
+	locked.Package.ArchiveRoot = "fixtures"
+	if err := installPackage(config, locked); err != nil {
+		t.Fatal(err)
+	}
+	for _, archiveRoot := range []string{"missing", "../outside"} {
+		locked.Package.ArchiveRoot = archiveRoot
+		if err := installPackage(config, locked); err == nil {
+			t.Fatalf("accepted invalid pkg ArchiveRoot %q", archiveRoot)
+		}
+		content, err := os.ReadFile(filepath.Join(installed, "installed.txt"))
+		if err != nil || string(content) != "local pkg payload\n" {
+			t.Fatalf("failed pkg extraction changed previous install: %q %v", content, err)
+		}
 	}
 }
 

@@ -6,9 +6,11 @@ import (
 	"bufio"
 	"compress/bzip2"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -345,20 +347,33 @@ func extractTar(content io.Reader, sink *archiveSink) error {
 	}
 }
 
-func sevenZipCommand(b Config) string {
+func sevenZipCommand(b Config) (string, error) {
 	if b.SzPath != "" {
-		return b.SzPath
+		return b.SzPath, nil
 	}
-	return "7z"
+	for _, name := range []string{"7zz", "7z"} {
+		command, err := installerCommand(b, b.TempDir, nil, name)
+		if err == nil {
+			return command.Path, nil
+		}
+		if !errors.Is(err, exec.ErrNotFound) {
+			return "", err
+		}
+	}
+	return "", fmt.Errorf("archive requires a configured extractor or preinstalled 7zz/7z; neither executable was found")
 }
 
 func extractXZ(b Config, artifact, destination string, sink *archiveSink) error {
+	executable, err := sevenZipCommand(b)
+	if err != nil {
+		return err
+	}
 	file, err := os.CreateTemp(filepath.Dir(destination), "decoded-*.tar")
 	if err != nil {
 		return err
 	}
 	writer := &boundedWriter{destination: file, remaining: extractionLimit(b) + 128<<20}
-	err = streamInstallerCommand(b, filepath.Dir(destination), writer, sevenZipCommand(b), "e", "-so", "--", artifact)
+	err = streamInstallerCommand(b, filepath.Dir(destination), writer, executable, "e", "-so", "--", artifact)
 	closeErr := file.Close()
 	if err != nil {
 		return fmt.Errorf("decode xz with configured/preinstalled 7z: %w", err)
@@ -445,7 +460,11 @@ func sevenZipEntries(listing []byte) ([]sevenZipEntry, error) {
 }
 
 func extractSevenZip(b Config, artifact string, sink *archiveSink) error {
-	listing, err := captureInstallerCommand(b, sink.root, sevenZipCommand(b), "l", "-slt", "--", artifact)
+	executable, err := sevenZipCommand(b)
+	if err != nil {
+		return err
+	}
+	listing, err := captureInstallerCommand(b, sink.root, executable, "l", "-slt", "--", artifact)
 	if err != nil {
 		return fmt.Errorf("list archive with configured/preinstalled 7z: %w", err)
 	}
@@ -471,7 +490,7 @@ func extractSevenZip(b Config, artifact string, sink *archiveSink) error {
 			return err
 		}
 		writer := &boundedWriter{destination: file, remaining: entry.size}
-		err = streamInstallerCommand(b, sink.root, writer, sevenZipCommand(b), "e", "-so", "-spd", "--", artifact, entry.name)
+		err = streamInstallerCommand(b, sink.root, writer, executable, "e", "-so", "-spd", "--", artifact, entry.name)
 		closeErr := file.Close()
 		if err != nil {
 			return err
