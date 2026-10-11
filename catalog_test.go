@@ -35,12 +35,16 @@ func TestLoadPackageRejectsInvalidJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := map[string]string{
-		"unknown field":   strings.TrimSuffix(string(valid), "}") + `,"Typo":true}`,
-		"trailing object": string(valid) + `{}`,
-		"trailing text":   string(valid) + `oops`,
-		"trailing comma":  strings.TrimSuffix(string(valid), "}") + `,}`,
-		"wrong type":      `{"Name":42}`,
-		"empty object":    `{}`,
+		"duplicate field":   strings.TrimSuffix(string(valid), "}") + `,"ID":"other"}`,
+		"escaped duplicate": strings.TrimSuffix(string(valid), "}") + `,"\u0049D":"other"}`,
+		"case alias":        strings.TrimSuffix(string(valid), "}") + `,"id":"other"}`,
+		"null string":       strings.Replace(string(valid), `"Version":""`, `"Version":null`, 1),
+		"unknown field":     strings.TrimSuffix(string(valid), "}") + `,"Typo":true}`,
+		"trailing object":   string(valid) + `{}`,
+		"trailing text":     string(valid) + `oops`,
+		"trailing comma":    strings.TrimSuffix(string(valid), "}") + `,}`,
+		"wrong type":        `{"Name":42}`,
+		"empty object":      `{}`,
 	}
 	for name, content := range cases {
 		t.Run(name, func(t *testing.T) {

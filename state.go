@@ -59,6 +59,9 @@ func readJSONDocument[T Settings | LockFile | Receipt | Profile | Package](path 
 	if err := validateJSONKeys(contents); err != nil {
 		return result, fmt.Errorf("validate JSON document %s: %w", path, err)
 	}
+	if err := validateDocumentFields(contents, reflect.TypeOf(result)); err != nil {
+		return result, fmt.Errorf("validate JSON fields in %s: %w", path, err)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(contents))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&result); err != nil {
@@ -110,15 +113,7 @@ func publishFile(staged, destination string) error {
 }
 
 func safeIdentifier(value string) bool {
-	if value == "" || value == "." || value == ".." || strings.ContainsAny(value, "/\\\r\n\x00:") {
-		return false
-	}
-	return filepath.Base(value) == value
-}
-
-func validDigest(value string) bool {
-	decoded, err := hex.DecodeString(value)
-	return err == nil && len(decoded) == 32 && value == strings.ToLower(value)
+	return packageComponent(value)
 }
 
 func validateLockedPackage(p LockedPackage, b Config) error {

@@ -150,6 +150,9 @@ func filterLocked(packages []LockedPackage, options commandOptions) ([]LockedPac
 }
 
 func resolveLock(b Config, profile string, packages []Package) (LockFile, error) {
+	if err := checkInstalledOwnership(b, packages); err != nil {
+		return LockFile{}, err
+	}
 	if err := ensureInstallationDirectories(b); err != nil {
 		return LockFile{}, err
 	}

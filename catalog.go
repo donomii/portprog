@@ -57,8 +57,8 @@ func validatePackage(recipe Package) error {
 	if recipe.OS != "all" && recipe.OS != "windows" && recipe.OS != "darwin" && recipe.OS != "linux" {
 		return fmt.Errorf("package %q OS %q: expected windows, darwin, linux, or all", recipe.ID, recipe.OS)
 	}
-	if recipe.Arch != "all" && recipe.Arch != "386" && recipe.Arch != "amd64" && recipe.Arch != "arm64" && recipe.Arch != "arm" {
-		return fmt.Errorf("package %q Arch %q: expected 386, amd64, arm64, arm, or all", recipe.ID, recipe.Arch)
+	if !supportedArch(recipe.Arch) {
+		return fmt.Errorf("package %q Arch %q: expected 386, amd64, arm64, or all", recipe.ID, recipe.Arch)
 	}
 	if recipe.Command != "" {
 		return fmt.Errorf("package %q Command: arbitrary command strings are unsupported", recipe.ID)
@@ -116,14 +116,17 @@ func validatePackageSource(recipe Package) error {
 	if recipe.Fetch == "git" && recipe.Zip != "" {
 		return fmt.Errorf("package %q Zip %q: Git recipes do not use an archive filename", recipe.ID, recipe.Zip)
 	}
+	if recipe.Fetch == "git" && recipe.Branch == "" {
+		return fmt.Errorf("package %q requires an explicit Git Branch, tag or commit", recipe.ID)
+	}
 	if strings.HasPrefix(recipe.Branch, "-") || strings.ContainsAny(recipe.Branch, "\r\n\x00") {
 		return fmt.Errorf("package %q Branch %q: expected a Git branch, tag, or commit without command options or control characters",
 			recipe.ID, recipe.Branch)
 	}
 	if recipe.SHA256 != "" {
 		digest, err := hex.DecodeString(recipe.SHA256)
-		if err != nil || len(digest) != 32 {
-			return fmt.Errorf("package %q SHA256 %q: expected 64 hexadecimal digits", recipe.ID, recipe.SHA256)
+		if err != nil || len(digest) != 32 || recipe.SHA256 != strings.ToLower(recipe.SHA256) {
+			return fmt.Errorf("package %q SHA256 %q: expected 64 lowercase hexadecimal digits", recipe.ID, recipe.SHA256)
 		}
 	}
 	return nil

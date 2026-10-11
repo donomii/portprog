@@ -5,48 +5,42 @@ import (
 	"time"
 )
 
-type JsonStringArray []string
-
 type Config struct {
-	GoPath                  string          //Path to GO library files
-	SourceDir               string          //the source (and build) directory
-	InstallDir              string          //The directory we install all files into (e.g. fakeRoot)
-	Dependencies            JsonStringArray //Package names (filenames) of all required dependencies
-	VersionlessDependencies JsonStringArray //Package names, without version number.  We will pick a package matching that name, possibly at random
-	SzPath                  string          //Path to sevenzip
-	ZipDir                  string
-	SiloDir                 string
-	TempDir                 string
-	RootDir                 string
-	OS                      string
-	Arch                    string
-	Offline                 bool
-	HTTPTimeout             time.Duration
-	MaxDownloadBytes        int64
-	MaxExtractBytes         int64
-	Output                  io.Writer
+	GoPath           string // Path to Go library files.
+	InstallDir       string // The directory we install all package directories into.
+	SzPath           string // Path to an already installed 7-Zip-compatible extractor; empty searches PATH.
+	ZipDir           string
+	TempDir          string
+	RootDir          string
+	OS               string
+	Arch             string
+	Offline          bool
+	HTTPTimeout      time.Duration
+	MaxDownloadBytes int64
+	MaxExtractBytes  int64
+	Output           io.Writer
 }
 
 type Package struct {
-	ID              string
-	Version         string
-	Name            string   // Name of the directory owned by this package under installs.
-	Zip             string   // Full archive name, including extension.
-	Url             string   // URL to download the archive from.
-	Fetch           string   // Fetch method: web or git.
-	Plan            string   // Build plan.
-	Branch          string   // Requested Git branch or tag, resolved to a commit in the lockfile.
-	Command         string
-	BinDir          string   // Executable directory relative to the installed package.
-	LibDir          string
-	BinDirs         []string // Both BinDir and BinDirs are added to the path.
-	Deletes         []string
-	Type            string
-	OS              string
-	Arch            string
-	ArchiveRoot     string
-	SHA256          string
-	Dependencies    []string
+	ID           string
+	Version      string
+	Name         string // Name of the directory owned by this package under installs.
+	Zip          string // Full archive name, including extension.
+	Url          string // URL to download the archive from.
+	Fetch        string // Fetch method: web or git.
+	Plan         string // Build plan.
+	Branch       string // Requested Git branch or tag, resolved to a commit in the lockfile.
+	Command      string
+	BinDir       string // Executable directory relative to the installed package.
+	LibDir       string
+	BinDirs      []string // Both BinDir and BinDirs are added to the path.
+	Deletes      []string
+	Type         string
+	OS           string
+	Arch         string
+	ArchiveRoot  string
+	SHA256       string
+	Dependencies []string
 }
 
 type LockedPackage struct {
@@ -89,4 +83,5 @@ type Settings struct {
 	HTTPTimeoutSecs  int    `json:"http_timeout_seconds"`
 	MaxDownloadBytes int64  `json:"max_download_bytes"`
 	MaxExtractBytes  int64  `json:"max_extract_bytes"`
+	SevenZip         string `json:"seven_zip"`
 }

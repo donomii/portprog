@@ -30,7 +30,7 @@ Every invocation completes with status zero on success or a nonzero status and c
 | `--no-git` | Exclude recipes that require Git fetching. |
 | `--validate` | Check every catalog recipe, dependency selection and profile without network requests. It does not certify remote URL availability. |
 | `--list` | Display installed package identities and whether files match their receipts. Mismatches produce a failure status. |
-| `--repair` | Reinstall packages with missing or changed files from their recorded artifact, then regenerate activation. |
+| `--repair` | Reinstall packages with missing or changed files from their recorded artifact, then regenerate activation. The lockfile recovers packages whose entire directory or receipt is missing. |
 | `--remove ID` | Remove one package from activation and the lockfile, preserving its installed directory under `retired`. Refuse removal when an installed or locked package depends on it. |
 | `--bundle DIRECTORY` | After installation succeeds, export a new, previously nonexistent offline bundle directory. |
 | `-test` | Run the local installation, relocation and repair check. |
@@ -51,6 +51,7 @@ A per-installation reservation file prevents concurrent modifying operations. It
 | `http_timeout_seconds` | `120` | Positive request deadline, including response-body transfer; maximum 86400 seconds. |
 | `max_download_bytes` | `8589934592` | Maximum accepted artifact size in bytes. |
 | `max_extract_bytes` | `17179869184` | Maximum expanded content size in bytes for one package. |
+| `seven_zip` | `""` | Optional path to an already installed 7-Zip-compatible extractor. Empty searches PATH for `7zz` or `7z`; native ZIP/tar extraction does not need it. |
 
 Installation paths may contain spaces and shell punctuation. Control characters and the host's PATH-list separator are rejected because they cannot be represented safely in the generated environment.
 

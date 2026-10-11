@@ -78,7 +78,7 @@ func populateBundle(b Config, source LockFile, stage string) error {
 	if err := copyBundleFile(executable, filepath.Join(stage, name), 0755); err != nil {
 		return err
 	}
-	launcher := "#!/bin/sh\nset -eu\nroot=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd -L)\nexec \"$root/portprog\"\n"
+	launcher := "#!/bin/sh\nset -eu\nroot=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd -L)\n\"$root/portprog\"\n"
 	batch := "@echo off\r\nsetlocal DisableDelayedExpansion\r\n\"%~dp0portprog.exe\"\r\nexit /b %errorlevel%\r\n"
 	if err := os.WriteFile(filepath.Join(stage, "run.sh"), []byte(launcher), 0755); err != nil {
 		return fmt.Errorf("write offline Unix launcher: %w", err)

@@ -126,6 +126,30 @@ func TestWorkflowFailedRemovalPreservesInstallation(t *testing.T) {
 	workflowReservationReleased(t, root)
 }
 
+func TestWorkflowRepairRecoversMissingInstallationRecords(t *testing.T) {
+	for _, missing := range []string{"directory", "receipt"} {
+		t.Run(missing, func(t *testing.T) {
+			root, recipe, archive := workflowFixture(t)
+			workflowRun(t, root, "--file", recipe)
+			directory := filepath.Join(root, "installs", "fixture")
+			original := directory
+			if missing == "receipt" {
+				original = filepath.Join(directory, ".portprog-receipt.json")
+			}
+			if err := os.Rename(original, filepath.Join(root, "retained-"+missing)); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(archive, archive+".retained"); err != nil {
+				t.Fatal(err)
+			}
+			workflowRun(t, root, "--repair", "--offline")
+			workflowCheckContent(t, filepath.Join(directory, "bin", "hello.txt"), "portable fixture\n")
+			workflowRun(t, root, "--list")
+			workflowReservationReleased(t, root)
+		})
+	}
+}
+
 func TestWorkflowReservationPreventsMutation(t *testing.T) {
 	root, recipe, _ := workflowFixture(t)
 	reservation := filepath.Join(root, ".portprog-operation.lock")
@@ -204,10 +228,11 @@ func TestWorkflowRejectsInvalidSettings(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := map[string]string{
-		"duplicate": strings.Replace(string(valid), "{", "{\"schema_version\":1,", 1),
-		"unknown":   strings.Replace(string(valid), "{", "{\"unexpected\":true,", 1),
-		"trailing":  string(valid) + " {}",
-		"null":      "null",
+		"duplicate":    strings.Replace(string(valid), "{", "{\"schema_version\":1,", 1),
+		"null boolean": strings.Replace(string(valid), `"offline":false`, `"offline":null`, 1),
+		"unknown":      strings.Replace(string(valid), "{", "{\"unexpected\":true,", 1),
+		"trailing":     string(valid) + " {}",
+		"null":         "null",
 	}
 	for name, document := range cases {
 		t.Run(name, func(t *testing.T) {

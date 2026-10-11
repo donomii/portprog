@@ -103,6 +103,27 @@ func verifyReceipt(directory string, receipt Receipt) error {
 	return nil
 }
 
+func checkInstalledOwnership(b Config, packages []Package) error {
+	receipts, err := installedReceipts(b)
+	if err != nil {
+		return err
+	}
+	for _, selected := range packages {
+		for _, receipt := range receipts {
+			installed := receipt.Package.Package
+			if selected.ID == installed.ID && selected.Name != installed.Name {
+				return fmt.Errorf("package ID %s already owns %s and cannot also own %s", selected.ID,
+					filepath.Join(b.InstallDir, installed.Name), filepath.Join(b.InstallDir, selected.Name))
+			}
+			if strings.EqualFold(selected.Name, installed.Name) && selected.ID != installed.ID {
+				return fmt.Errorf("package %s cannot own directory %s already owned by %s", selected.ID,
+					filepath.Join(b.InstallDir, installed.Name), installed.ID)
+			}
+		}
+	}
+	return nil
+}
+
 func activateInstalled(b Config) error {
 	receipts, err := installedReceipts(b)
 	if err != nil {
@@ -146,17 +167,68 @@ func repairInstalled(b Config) error {
 	if err != nil {
 		return err
 	}
+	lock, err := readLock(filepath.Join(b.RootDir, "portprog.lock.json"), b)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	byID := make(map[string]LockedPackage)
+	for _, locked := range lock.Packages {
+		byID[locked.Package.ID] = locked
+	}
 	for _, receipt := range receipts {
-		err := verifyReceipt(filepath.Join(b.InstallDir, receipt.Package.Package.Name), receipt)
-		logReceipt(b.Output, receipt, err)
-		if err != nil {
-			if err := installPackage(b, receipt.Package); err != nil {
-				return fmt.Errorf("repair %s from recorded artifact %s: %w", receipt.Package.Package.ID, receipt.Package.SHA256, err)
+		byID[receipt.Package.Package.ID] = receipt.Package
+	}
+	packages := make([]LockedPackage, 0, len(byID))
+	for _, locked := range byID {
+		packages = append(packages, locked)
+	}
+	packages, err = orderLockedPackages(b, packages)
+	if err != nil {
+		return err
+	}
+	for _, locked := range packages {
+		directory := filepath.Join(b.InstallDir, locked.Package.Name)
+		receipt, receiptErr := readReceipt(directory, b)
+		if receiptErr != nil && !errors.Is(receiptErr, os.ErrNotExist) {
+			return receiptErr
+		}
+		if receiptErr == nil {
+			receiptErr = verifyReceipt(directory, receipt)
+			logReceipt(b.Output, receipt, receiptErr)
+		}
+		if receiptErr != nil {
+			logInstalling(b.Output, locked.Package, directory)
+			if err := installPackage(b, locked); err != nil {
+				return fmt.Errorf("repair %s from recorded artifact %s: %w", locked.Package.ID, locked.SHA256, err)
 			}
-			logInstalled(b.Output, receipt.Package.Package)
+			logInstalled(b.Output, locked.Package)
 		}
 	}
 	return activateInstalled(b)
+}
+
+func orderLockedPackages(b Config, packages []LockedPackage) ([]LockedPackage, error) {
+	catalog := make(map[string]Package, len(packages))
+	lockedByID := make(map[string]LockedPackage, len(packages))
+	ids := make([]string, 0, len(packages))
+	for _, locked := range packages {
+		catalog[locked.Package.ID] = locked.Package
+		lockedByID[locked.Package.ID] = locked
+		ids = append(ids, locked.Package.ID)
+	}
+	sort.Strings(ids)
+	ordered, err := selectPackages(catalog, ids, b.OS, b.Arch)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkInstalledOwnership(b, ordered); err != nil {
+		return nil, err
+	}
+	result := make([]LockedPackage, 0, len(ordered))
+	for _, p := range ordered {
+		result = append(result, lockedByID[p.ID])
+	}
+	return result, nil
 }
 
 func removeInstalled(b Config, id string) error {
@@ -201,6 +273,10 @@ func removeInstalled(b Config, id string) error {
 		return err
 	}
 	if errors.Is(err, os.ErrNotExist) {
+		remaining, err = orderLockedPackages(b, remaining)
+		if err != nil {
+			return err
+		}
 		lock = LockFile{SchemaVersion: 1, OS: b.OS, Arch: b.Arch, Profile: "installed", Packages: remaining}
 	} else {
 		retained := make([]LockedPackage, 0, len(lock.Packages))

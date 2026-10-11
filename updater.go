@@ -14,9 +14,9 @@ import (
 
 type commandOptions struct {
 	root, profile, file, bundle, remove string
-	validate, lock, offline, noInstall bool
-	noGcc, noGo, noGit, devel bool
-	repair, list, selfTest bool
+	validate, lock, offline, noInstall  bool
+	noGcc, noGo, noGit, devel           bool
+	repair, list, selfTest              bool
 }
 
 func main() {
@@ -123,6 +123,10 @@ func validateOptions(options commandOptions) error {
 	if options.bundle != "" && modes != 0 {
 		return fmt.Errorf("--bundle accompanies installation and cannot be combined with a separate operation")
 	}
+	selectionRequested := options.file != "" || options.profile != "" || options.devel || options.noGcc || options.noGo || options.noGit
+	if selectionRequested && (options.validate || options.noInstall || options.repair || options.list || options.remove != "" || options.selfTest) {
+		return fmt.Errorf("package selectors and compiler/Git exclusions apply only to installation or --lock, not the selected operation")
+	}
 	return nil
 }
 
@@ -140,7 +144,7 @@ func validateRoot(root string) error {
 
 func configuration(root string, settings Settings, output io.Writer) Config {
 	return Config{
-		RootDir: root, InstallDir: filepath.Join(root, "installs"), SourceDir: filepath.Join(root, "src"),
+		RootDir: root, InstallDir: filepath.Join(root, "installs"), SzPath: settings.SevenZip,
 		GoPath: filepath.Join(root, "langlibs", "gopath"), ZipDir: filepath.Join(root, "zips"),
 		TempDir: filepath.Join(root, "temp"), OS: runtime.GOOS, Arch: runtime.GOARCH,
 		Offline: settings.Offline, HTTPTimeout: time.Duration(settings.HTTPTimeoutSecs) * time.Second,
@@ -177,6 +181,13 @@ func installSelected(b Config, options commandOptions, selectedExplicitly bool) 
 	}
 	lock.Packages, err = filterLocked(lock.Packages, options)
 	if err != nil {
+		return err
+	}
+	packages := make([]Package, 0, len(lock.Packages))
+	for _, locked := range lock.Packages {
+		packages = append(packages, locked.Package)
+	}
+	if err := checkInstalledOwnership(b, packages); err != nil {
 		return err
 	}
 	if options.lock {

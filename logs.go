@@ -54,6 +54,9 @@ func logSelfTest(output io.Writer, destination string) {
 }
 
 func logUnmanaged(output io.Writer, path string) {
+	if output == nil {
+		return
+	}
 	fmt.Fprintf(output, "Directory %s has no Portprog installation receipt and is excluded from activation; installing its recipe creates a verified record.\n", path)
 }
 

@@ -1,16 +1,72 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
 )
 
 func validateJSONKeys(data []byte) error {
 	if !json.Valid(data) {
-		return fmt.Errorf("expected one valid JSON value")
+		var value json.RawMessage
+		return json.Unmarshal(data, &value)
 	}
 	_, err := checkJSONValue(data, 0)
 	return err
+}
+
+func validateDocumentFields(data json.RawMessage, shape reflect.Type) error {
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) && shape.Kind() != reflect.Slice && shape.Kind() != reflect.Map {
+		return fmt.Errorf("null is not a valid %s value", shape)
+	}
+	switch shape.Kind() {
+	case reflect.Struct:
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(data, &fields); err != nil {
+			return err
+		}
+		known := make(map[string]reflect.Type)
+		for index := 0; index < shape.NumField(); index++ {
+			field := shape.Field(index)
+			name := strings.Split(field.Tag.Get("json"), ",")[0]
+			if name == "" {
+				name = field.Name
+			}
+			known[name] = field.Type
+		}
+		for name, value := range fields {
+			field, exists := known[name]
+			if !exists {
+				return fmt.Errorf("unknown field %q in %s; field names are case-sensitive", name, shape.Name())
+			}
+			if err := validateDocumentFields(value, field); err != nil {
+				return fmt.Errorf("field %s: %w", name, err)
+			}
+		}
+	case reflect.Slice:
+		var elements []json.RawMessage
+		if err := json.Unmarshal(data, &elements); err != nil {
+			return err
+		}
+		for index, value := range elements {
+			if err := validateDocumentFields(value, shape.Elem()); err != nil {
+				return fmt.Errorf("element %d: %w", index, err)
+			}
+		}
+	case reflect.Map:
+		var values map[string]json.RawMessage
+		if err := json.Unmarshal(data, &values); err != nil {
+			return err
+		}
+		for name, value := range values {
+			if err := validateDocumentFields(value, shape.Elem()); err != nil {
+				return fmt.Errorf("map key %s: %w", name, err)
+			}
+		}
+	}
+	return nil
 }
 
 func jsonWhitespace(data []byte, offset int) int {
