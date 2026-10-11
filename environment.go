@@ -2,15 +2,21 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
 func writeEnvironment(b Config, packages []LockedPackage) error {
-	paths, err := environmentPaths(packages, b.OS == "windows")
+	documents, err := environmentDocuments(packages, b.OS == "windows")
 	if err != nil {
 		return err
+	}
+	return publishDocuments(b.RootDir, documents)
+}
+
+func environmentDocuments(packages []LockedPackage, windows bool) (map[string][]byte, error) {
+	paths, err := environmentPaths(packages, windows)
+	if err != nil {
+		return nil, err
 	}
 	scripts := []struct {
 		name string
@@ -21,18 +27,11 @@ func writeEnvironment(b Config, packages []LockedPackage) error {
 		{"environment.bat", batchEnvironment(paths)},
 		{"environment.ps1", powershellEnvironment(paths)},
 	}
+	documents := make(map[string][]byte)
 	for _, script := range scripts {
-		filename := filepath.Join(b.RootDir, script.name)
-		if info, err := os.Lstat(filename); err == nil && !info.Mode().IsRegular() {
-			return fmt.Errorf("write activation script %q: existing path is not a regular file", filename)
-		} else if err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("inspect activation script %q: %w", filename, err)
-		}
-		if err := os.WriteFile(filename, []byte(script.text), 0644); err != nil {
-			return fmt.Errorf("write activation script %q: %w", filename, err)
-		}
+		documents[script.name] = []byte(script.text)
 	}
-	return nil
+	return documents, nil
 }
 
 func environmentPaths(packages []LockedPackage, windows bool) ([]string, error) {

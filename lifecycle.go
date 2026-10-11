@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -181,14 +182,62 @@ func removeInstalled(b Config, id string) error {
 	if target == nil {
 		return fmt.Errorf("package %s has no installation receipt under %s", id, b.InstallDir)
 	}
+	remaining := make([]LockedPackage, 0, len(receipts)-1)
+	for _, receipt := range receipts {
+		if receipt.Package.Package.ID != id {
+			if err := verifyReceipt(filepath.Join(b.InstallDir, receipt.Package.Package.Name), receipt); err != nil {
+				return fmt.Errorf("removal of %s cannot regenerate activation: %w", id, err)
+			}
+			remaining = append(remaining, receipt.Package)
+		}
+	}
+	documents, err := environmentDocuments(remaining, b.OS == "windows")
+	if err != nil {
+		return err
+	}
+	lockPath := filepath.Join(b.RootDir, "portprog.lock.json")
+	lock, err := readLock(lockPath, b)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		lock = LockFile{SchemaVersion: 1, OS: b.OS, Arch: b.Arch, Profile: "installed", Packages: remaining}
+	} else {
+		retained := make([]LockedPackage, 0, len(lock.Packages))
+		for _, p := range lock.Packages {
+			for _, dependency := range p.Package.Dependencies {
+				if dependency == id {
+					return fmt.Errorf("cannot remove %s while locked package %s depends on it", id, p.Package.ID)
+				}
+			}
+			if p.Package.ID != id {
+				retained = append(retained, p)
+			}
+		}
+		lock.Packages = retained
+	}
+	lockBytes, err := json.MarshalIndent(lock, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode updated lock after removing %s: %w", id, err)
+	}
+	documents["portprog.lock.json"] = append(lockBytes, '\n')
 	retired := filepath.Join(b.RootDir, "retired")
 	if err := os.MkdirAll(retired, 0755); err != nil {
 		return fmt.Errorf("create retired-package directory %s: %w", retired, err)
 	}
 	destination := filepath.Join(retired, id+"-"+time.Now().UTC().Format("20060102T150405.000000000"))
-	if err := os.Rename(filepath.Join(b.InstallDir, target.Package.Package.Name), destination); err != nil {
+	original := filepath.Join(b.InstallDir, target.Package.Package.Name)
+	if err := os.Rename(original, destination); err != nil {
 		return fmt.Errorf("retire installed package %s to %s: %w", id, destination, err)
 	}
+	if err := publishDocuments(b.RootDir, documents); err != nil {
+		rollbackErr := os.Rename(destination, original)
+		if rollbackErr != nil {
+			rollbackErr = fmt.Errorf("restore package %s from %s to %s: %w", id, destination, original, rollbackErr)
+		}
+		return errors.Join(err, rollbackErr)
+	}
 	logRetired(b.Output, id, destination)
-	return activateInstalled(b)
+	logActivation(b.Output, b.RootDir, len(remaining))
+	return nil
 }

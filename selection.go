@@ -41,7 +41,7 @@ func supportedArch(name string) bool {
 func profileIDs(profile Profile, osName, arch string) ([]string, error) {
 	var result []string
 	seen := make(map[string]bool)
-	for _, key := range []string{"all/all", osName + "/all", osName + "/" + arch} {
+	for _, key := range []string{"all/all", "all/" + arch, osName + "/all", osName + "/" + arch} {
 		for _, id := range profile.Packages[key] {
 			if !seen[id] {
 				result = append(result, id)
@@ -145,9 +145,6 @@ func filterLocked(packages []LockedPackage, options commandOptions) ([]LockedPac
 				return nil, fmt.Errorf("selected package %s requires %s, which is missing or excluded by a compiler/Git option", p.Package.ID, dependency)
 			}
 		}
-	}
-	if len(result) == 0 {
-		return nil, fmt.Errorf("package selection is empty after applying compiler and Git exclusions")
 	}
 	return result, nil
 }

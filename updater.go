@@ -84,17 +84,8 @@ func run(args []string, output, diagnostics io.Writer) error {
 	if options.validate {
 		return validateCatalogAndProfiles(b)
 	}
-	if options.noInstall {
-		return activateInstalled(b)
-	}
 	if options.list {
 		return listInstalled(b)
-	}
-	if options.remove != "" {
-		return removeInstalled(b, options.remove)
-	}
-	if options.repair {
-		return repairInstalled(b)
 	}
 	selectedExplicitly := options.file != "" || options.devel
 	flags.Visit(func(item *flag.Flag) {
@@ -102,7 +93,18 @@ func run(args []string, output, diagnostics io.Writer) error {
 			selectedExplicitly = true
 		}
 	})
-	return installSelected(b, options, selectedExplicitly)
+	return withInstallationLock(b, func() error {
+		if options.noInstall {
+			return activateInstalled(b)
+		}
+		if options.remove != "" {
+			return removeInstalled(b, options.remove)
+		}
+		if options.repair {
+			return repairInstalled(b)
+		}
+		return installSelected(b, options, selectedExplicitly)
+	})
 }
 
 func validateOptions(options commandOptions) error {
@@ -125,7 +127,12 @@ func validateOptions(options commandOptions) error {
 }
 
 func validateRoot(root string) error {
-	if strings.ContainsAny(root, "\r\n\x00") || strings.ContainsRune(root, os.PathListSeparator) {
+	for _, character := range root {
+		if character < 32 || character == 127 {
+			return fmt.Errorf("installation directory %q contains control character U+%04X", root, character)
+		}
+	}
+	if strings.ContainsRune(root, os.PathListSeparator) {
 		return fmt.Errorf("installation directory %q contains a control character or the PATH separator %q", root, string(os.PathListSeparator))
 	}
 	return nil
@@ -180,6 +187,9 @@ func installSelected(b Config, options commandOptions, selectedExplicitly bool) 
 	}
 	for _, p := range lock.Packages {
 		receipt, readErr := readReceipt(filepath.Join(b.InstallDir, p.Package.Name), b)
+		if readErr == nil && receipt.Package.Package.ID != p.Package.ID {
+			return fmt.Errorf("package %s cannot replace directory %s owned by installed package %s", p.Package.ID, p.Package.Name, receipt.Package.Package.ID)
+		}
 		if readErr == nil && receipt.Package.SHA256 == p.SHA256 && packagesEqual(receipt.Package.Package, p.Package) {
 			if verifyErr := verifyReceipt(filepath.Join(b.InstallDir, p.Package.Name), receipt); verifyErr == nil {
 				logInstalled(b.Output, p.Package)

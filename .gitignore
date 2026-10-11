@@ -13,3 +13,15 @@ portprog.exe
 langlibs
 installs
 packages-develop
+/temp/
+/src/
+/backups/
+/retired/
+/bundles/
+/.portprog-operation.lock
+/.portprog-json-*
+/.portprog-document-*
+/environment.ps1
+/portprog.lock.json
+/*.previous-*
+/portprog.test*

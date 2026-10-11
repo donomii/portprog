@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -34,7 +35,7 @@ func loadSettings(root string) (Settings, error) {
 	return settings, nil
 }
 
-func readJSONDocument[T Settings | LockFile | Receipt | Profile](path string) (T, error) {
+func readJSONDocument[T Settings | LockFile | Receipt | Profile | Package](path string) (T, error) {
 	var result T
 	file, err := os.Open(path)
 	if err != nil {
@@ -48,7 +49,17 @@ func readJSONDocument[T Settings | LockFile | Receipt | Profile](path string) (T
 	if !stat.Mode().IsRegular() || stat.Size() > 32<<20 {
 		return result, fmt.Errorf("JSON document %s must be a regular file no larger than 32 MiB; received mode %s and %d bytes", path, stat.Mode(), stat.Size())
 	}
-	decoder := json.NewDecoder(file)
+	contents, err := io.ReadAll(io.LimitReader(file, (32<<20)+1))
+	if err != nil {
+		return result, fmt.Errorf("read JSON document %s: %w", path, err)
+	}
+	if len(contents) > 32<<20 {
+		return result, fmt.Errorf("JSON document %s grew beyond the 32 MiB limit while reading", path)
+	}
+	if err := validateJSONKeys(contents); err != nil {
+		return result, fmt.Errorf("validate JSON document %s: %w", path, err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(contents))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&result); err != nil {
 		return result, fmt.Errorf("decode %s: %w", path, err)
@@ -160,9 +171,6 @@ func readLock(path string, b Config) (LockFile, error) {
 		}
 		seen[p.Package.ID] = true
 		targets[name] = p.Package.ID
-	}
-	if len(lock.Packages) == 0 {
-		return LockFile{}, fmt.Errorf("lockfile %s contains no packages", path)
 	}
 	return lock, nil
 }
