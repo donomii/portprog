@@ -1,3 +1,3 @@
 module github.com/donomii/portprog
 
-go 1.22
+go 1.22.9

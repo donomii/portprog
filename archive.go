@@ -390,6 +390,100 @@ type sevenZipEntry struct {
 	dir  bool
 }
 
+type sevenZipNode struct {
+	name     string
+	dir      bool
+	explicit bool
+}
+
+func validateSevenZipEntries(entries []sevenZipEntry, root string, limit int64) error {
+	if len(entries) == 0 || len(entries) > 200000 {
+		return fmt.Errorf("7z archive has %d entries; expected between 1 and 200000", len(entries))
+	}
+	nodes := make(map[string]sevenZipNode)
+	var total int64
+	for _, entry := range entries {
+		if _, err := archivePath(root, entry.name); err != nil {
+			return err
+		}
+		name := strings.TrimSuffix(entry.name, "/")
+		if name == "" || name == "." || path.Clean(name) != name || len(name) > 4096 {
+			return fmt.Errorf("7z entry %q must use a canonical relative path", entry.name)
+		}
+		if entry.size < 0 || entry.size > limit-total || entry.dir && entry.size != 0 {
+			return fmt.Errorf("7z entry %q size %d exceeds remaining extraction allowance %d or gives a directory nonzero size", entry.name, entry.size, limit-total)
+		}
+		total += entry.size
+		parts := strings.Split(name, "/")
+		if len(parts) > 256 {
+			return fmt.Errorf("7z entry %q exceeds 256 directory components", entry.name)
+		}
+		for index := range parts {
+			prefix := strings.Join(parts[:index+1], "/")
+			key := strings.ToLower(prefix)
+			explicit := index == len(parts)-1
+			directory := !explicit || entry.dir
+			if previous, exists := nodes[key]; exists {
+				if previous.name != prefix || previous.dir != directory || previous.explicit && explicit {
+					return fmt.Errorf("7z entry %q conflicts with earlier path %q: duplicate, letter-case collision, or file/directory conflict", entry.name, previous.name)
+				}
+				explicit = explicit || previous.explicit
+			}
+			nodes[key] = sevenZipNode{name: prefix, dir: directory, explicit: explicit}
+			if len(nodes) > 200000 {
+				return fmt.Errorf("7z archive exceeds 200000 entries including parent directories")
+			}
+		}
+	}
+	return nil
+}
+
+func verifySevenZipTree(root string, entries []sevenZipEntry) error {
+	expected := make(map[string]sevenZipEntry, len(entries))
+	for _, entry := range entries {
+		expected[strings.TrimSuffix(entry.name, "/")] = entry
+	}
+	seen := make(map[string]bool, len(entries))
+	err := filepath.WalkDir(root, func(filename string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if filename == root {
+			return nil
+		}
+		relative, err := filepath.Rel(root, filename)
+		if err != nil {
+			return err
+		}
+		name := filepath.ToSlash(relative)
+		listed, exists := expected[name]
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() && !info.Mode().IsRegular() {
+			return fmt.Errorf("7z extracted unsupported file %q with mode %s", name, info.Mode())
+		}
+		if !exists && info.IsDir() {
+			return nil
+		}
+		if !exists || info.IsDir() != listed.dir || !listed.dir && info.Size() != listed.size {
+			return fmt.Errorf("7z extracted entry %q differs from listing: exists=%t, directory=%t, size=%d; expected directory=%t size=%d", name, exists, info.IsDir(), info.Size(), listed.dir, listed.size)
+		}
+		seen[name] = true
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	for name := range expected {
+		if !seen[name] {
+			return fmt.Errorf("7z did not extract listed entry %q", name)
+		}
+	}
+	return nil
+}
+
 func sevenZipEntries(listing []byte) ([]sevenZipEntry, error) {
 	scanner := bufio.NewScanner(strings.NewReader(string(listing)))
 	scanner.Buffer(make([]byte, 4096), 65536)
@@ -464,7 +558,7 @@ func extractSevenZip(b Config, artifact string, sink *archiveSink) error {
 	if err != nil {
 		return err
 	}
-	listing, err := captureInstallerCommand(b, sink.root, executable, "l", "-slt", "--", artifact)
+	listing, err := captureInstallerCommand(b, sink.root, executable, "l", "-slt", "-sccUTF-8", "--", artifact)
 	if err != nil {
 		return fmt.Errorf("list archive with configured/preinstalled 7z: %w", err)
 	}
@@ -472,44 +566,18 @@ func extractSevenZip(b Config, artifact string, sink *archiveSink) error {
 	if err != nil {
 		return err
 	}
-	for _, entry := range entries {
-		if _, err := archivePath(sink.root, entry.name); err != nil {
-			return err
-		}
-		if entry.dir {
-			if err := sink.add(entry.name, os.ModeDir|0755, 0, strings.NewReader(""), "", false); err != nil {
-				return err
-			}
-			continue
-		}
-		if entry.size > sink.limit-sink.written {
-			return fmt.Errorf("7z entry %q exceeds extraction limit %d", entry.name, sink.limit)
-		}
-		file, err := os.CreateTemp(filepath.Dir(sink.root), "7z-entry-")
-		if err != nil {
-			return err
-		}
-		writer := &boundedWriter{destination: file, remaining: entry.size}
-		err = streamInstallerCommand(b, sink.root, writer, executable, "e", "-so", "-spd", "--", artifact, entry.name)
-		closeErr := file.Close()
-		if err != nil {
-			return err
-		}
-		if closeErr != nil {
-			return closeErr
-		}
-		content, err := os.Open(file.Name())
-		if err != nil {
-			return err
-		}
-		err = sink.add(entry.name, 0644, entry.size, content, "", false)
-		closeErr = content.Close()
-		if err != nil {
-			return err
-		}
-		if closeErr != nil {
-			return closeErr
-		}
+	if err := validateSevenZipEntries(entries, sink.root, sink.limit); err != nil {
+		return err
 	}
-	return nil
+	extracted, err := os.MkdirTemp(filepath.Dir(sink.root), "7z-extracted-")
+	if err != nil {
+		return err
+	}
+	if err := runInstallerCommand(b, sink.root, executable, "x", "-y", "-aoa", "-sccUTF-8", "-o"+extracted, "--", artifact); err != nil {
+		return fmt.Errorf("7z extraction retained at %q: %w", extracted, err)
+	}
+	if err := verifySevenZipTree(extracted, entries); err != nil {
+		return fmt.Errorf("7z extraction retained at %q: %w", extracted, err)
+	}
+	return copyInstallTree(extracted, sink.root, nil, sink.limit)
 }

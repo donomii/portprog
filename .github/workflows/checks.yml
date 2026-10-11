@@ -19,6 +19,7 @@ jobs:
       GOTOOLCHAIN: local
       GOPROXY: 'off'
       GOSUMDB: 'off'
+      PORTPROG_REQUIRE_7ZIP: '1'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -27,17 +28,18 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: false
-      - name: Install Fish for Linux activation checks
+      - name: Install Fish and 7-Zip for Linux checks
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y fish
-      - name: Install Fish for macOS activation checks
+        run: sudo apt-get update && sudo apt-get install -y fish p7zip-full
+      - name: Install Fish and 7-Zip for macOS checks
         if: runner.os == 'macOS'
-        run: brew install fish
+        run: brew install fish sevenzip
       - name: Prepare GNU make and shell utilities for Windows source builds
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $msysBin = 'C:\msys64\usr\bin'
+          $env:PATH = "$msysBin;$env:PATH"
           $pacman = Join-Path $msysBin 'pacman.exe'
           if (-not (Test-Path -LiteralPath $pacman -PathType Leaf)) { throw "MSYS2 package manager is missing: $pacman" }
           & $pacman --sync --refresh --needed --noconfirm make bash coreutils
@@ -46,9 +48,13 @@ jobs:
             $executable = Join-Path $msysBin "$tool.exe"
             if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) { throw "Required Windows build tool is missing: $executable" }
             & $executable --version
-            if ($LASTEXITCODE -ne 0) { throw "Required Windows build tool failed: $executable, status $LASTEXITCODE" }
+            $expectedStatus = if ($tool -eq 'false') { 1 } else { 0 }
+            if ($LASTEXITCODE -ne $expectedStatus) { throw "Required Windows build tool failed: $executable, status $LASTEXITCODE, expected $expectedStatus" }
           }
           $msysBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $sevenZip = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
+          if (-not (Test-Path -LiteralPath $sevenZip -PathType Leaf)) { throw "Required archive extractor is missing: $sevenZip" }
+          (Split-Path $sevenZip) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Test, build, validate catalogs and run the local installation check
         if: runner.os != 'Windows'
         env:
@@ -62,4 +68,4 @@ jobs:
         if: runner.os != 'Windows'
         env:
           PORTPROG_REQUIRE_FISH: '1'
-        run: go test -race ./...
+        run: go test -race -ldflags=-B=gobuildid ./...

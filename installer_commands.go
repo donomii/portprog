@@ -235,7 +235,12 @@ func buildSource(b Config, p Package, source, stage string) (string, error) {
 			return "", err
 		}
 		environment := []string{"GOBIN=" + bin, "GOPATH=" + goPath, "GOMODCACHE=" + filepath.Join(goPath, "pkg", "mod"), "GOCACHE=" + filepath.Join(goPath, "build-cache"), "GOENV=off", "GOWORK=off"}
-		if err := runInstallerCommandEnv(b, source, environment, "go", "install", "./..."); err != nil {
+		arguments := []string{"install"}
+		if runtime.GOOS == "darwin" {
+			arguments = append(arguments, "-ldflags=-B=gobuildid")
+		}
+		arguments = append(arguments, "./...")
+		if err := runInstallerCommandEnv(b, source, environment, "go", arguments...); err != nil {
 			return "", err
 		}
 	case "cmake":

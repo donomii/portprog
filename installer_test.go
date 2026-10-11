@@ -530,3 +530,94 @@ func TestFailedBuildStopsBeforeInstall(t *testing.T) {
 		t.Fatalf("install ran after failed build: %v", err)
 	}
 }
+
+func TestSevenZipListingPreflight(t *testing.T) {
+	root := t.TempDir()
+	valid := []sevenZipEntry{{name: "bin", dir: true}, {name: "bin/tool", size: 4}, {name: "data/naïve.txt", size: 5}}
+	if err := validateSevenZipEntries(valid, root, 9); err != nil {
+		t.Fatal(err)
+	}
+	cases := map[string][]sevenZipEntry{
+		"parent escape":       {{name: "../outside", size: 1}},
+		"absolute":            {{name: "/outside", size: 1}},
+		"device":              {{name: "NUL", size: 1}},
+		"noncanonical":        {{name: "a/../b", size: 1}},
+		"duplicate":           {{name: "file", size: 1}, {name: "file", size: 1}},
+		"case collision":      {{name: "File", size: 1}, {name: "file", size: 1}},
+		"implicit case":       {{name: "Bin/a", size: 1}, {name: "bin/b", size: 1}},
+		"file parent":         {{name: "parent", size: 1}, {name: "parent/file", size: 1}},
+		"parent becomes file": {{name: "parent/file", size: 1}, {name: "parent", size: 1}},
+		"aggregate bytes":     {{name: "one", size: 6}, {name: "two", size: 6}},
+		"negative bytes":      {{name: "one", size: -1}},
+		"directory bytes":     {{name: "directory", size: 1, dir: true}},
+	}
+	for name, entries := range cases {
+		t.Run(name, func(t *testing.T) {
+			if err := validateSevenZipEntries(entries, root, 10); err == nil {
+				t.Fatalf("accepted invalid listing %+v", entries)
+			}
+		})
+	}
+	if err := validateSevenZipEntries(make([]sevenZipEntry, 200001), root, 10); err == nil {
+		t.Fatal("accepted excessive entry count")
+	}
+	for _, metadata := range []string{"Attributes = A lrwxrwxrwx", "Symbolic Link = target", "Hard Link = target"} {
+		listing := []byte("7z listing\n----------\nPath = link\nSize = 6\n" + metadata + "\n\n")
+		if _, err := sevenZipEntries(listing); err == nil {
+			t.Fatalf("accepted link metadata %q", metadata)
+		}
+	}
+	listing := []byte("7z listing\n----------\nPath = data/naïve.txt\nSize = 5\nAttributes = A -rw-r--r--\n\n")
+	entries, err := sevenZipEntries(listing)
+	if err != nil || len(entries) != 1 || entries[0].name != "data/naïve.txt" {
+		t.Fatalf("UTF-8 listing decode: %+v %v", entries, err)
+	}
+}
+
+func TestSevenZipSolidArchiveIntegration(t *testing.T) {
+	config := installerTestConfig(t)
+	executable, err := sevenZipCommand(config)
+	if err != nil {
+		if os.Getenv("PORTPROG_REQUIRE_7ZIP") == "1" {
+			t.Fatalf("real 7z integration is required: %v", err)
+		}
+		if !strings.Contains(err.Error(), "neither executable was found") {
+			t.Fatal(err)
+		}
+		t.Log("7zz/7z is unavailable; verified the explicit missing-extractor error. Real solid-archive extraction requires PORTPROG_REQUIRE_7ZIP=1 and an installed extractor.")
+		return
+	}
+	source := filepath.Join(config.RootDir, "solid-source")
+	for index := 0; index < 64; index++ {
+		name := filepath.Join(source, "release", "data", fmt.Sprintf("file-%03d.txt", index))
+		installerTestWrite(t, name, []byte(fmt.Sprintf("solid archive file %d\n", index)), 0644)
+	}
+	installerTestWrite(t, filepath.Join(source, "release", "bin", "naïve-tool"), []byte("complete UTF-8 path\n"), 0755)
+	archive := filepath.Join(config.RootDir, "solid.7z")
+	if err := runInstallerCommand(config, source, executable, "a", "-t7z", "-ms=on", "-mx=1", "--", archive, "release"); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadDir(config.TempDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(config.RootDir, "solid-extracted")
+	if err := extractArchive(config, archive, "solid.7z", destination); err != nil {
+		t.Fatal(err)
+	}
+	after, err := os.ReadDir(config.TempDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after)-len(before) != 2 {
+		t.Fatalf("solid archive required %d command logs; expected one listing and one extraction", len(after)-len(before))
+	}
+	expected, err := collectInstalledFiles(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, err := collectInstalledFiles(destination)
+	if err != nil || !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("solid archive contents differ: expected %+v actual %+v error %v", expected, actual, err)
+	}
+}

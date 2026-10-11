@@ -8,7 +8,7 @@ The supported installer hosts are Windows, macOS and Linux on the architectures 
 
 `run.sh` on Unix or `run.bat` on Windows is the no-argument launcher. In a source checkout it builds Portprog before starting it. In an exported bundle it starts the included executable. The default profile and limits are editable in `portprog.json` beside the executable. A first normal launch resolves the selected profile, writes a lockfile, installs its packages and writes activation scripts. Later launches replay the lockfile and reuse installations whose receipts still match.
 
-`build.sh`/`build.bat` compile the executable. `test.sh`/`test.bat` run the full Go regression suite, compile the program, run its local `-test` installation check and validate the catalog. `demo.sh` runs the local demonstration/checks. `install.sh` starts the normal launcher. The Makefile exposes build, test, demo and install targets. Building Portprog itself needs Go 1.22 or later and no third-party Go modules.
+`build.sh`/`build.bat` compile the executable. `test.sh`/`test.bat` run the full Go regression suite, compile the program, run its local `-test` installation check and validate the catalog. `demo.sh` runs the local demonstration/checks. `install.sh` starts the normal launcher. The Makefile exposes build, test, demo and install targets. Building Portprog itself needs Go 1.22.9 or later and no third-party Go modules. The Unix launchers explicitly include a build UUID so older supported Go linkers produce executables accepted by macOS 26; direct builds with older Go need `-ldflags=-B=gobuildid` too. Go source installations on macOS include the same linker setting.
 
 The local `-test` check creates an archive, installs and verifies it, exports and replays an offline installation image, moves the installation, damages a file and repairs it without contacting a remote service. It prints the retained diagnostic directory. The test fixtures do not download or execute catalog software.
 
@@ -80,7 +80,7 @@ Native ZIP, gzip-compressed tar, bzip2-compressed tar and tar extraction use loc
 
 On Windows, configure and CMake builds install into a staging prefix because Unix `DESTDIR` cannot represent a Windows drive prefix. Programs that embed that prefix need upstream relocation support. On Unix, these builds use the final installation prefix with a separate staging root.
 
-Staging is not a sandbox: source builds and MSI administrative actions execute upstream code. Native package tools may expand temporary files before Portprog checks the payload-copy size limit. Package recipes and executable payloads therefore remain trusted inputs even when their downloads are pinned by hash.
+Staging is not a sandbox: source builds and MSI administrative actions execute upstream code. External extractors may expand temporary files before Portprog checks the payload-copy size limit. 7-Zip listings are checked for paths, links, collisions and advertised sizes before extraction. Package recipes and executable payloads therefore remain trusted inputs even when their downloads are pinned by hash.
 
 Failed directory selection never falls through to a different directory. Download, archive, command and publication errors include the affected package/path and the underlying failure. A package is not reported installed until its payload and receipt have been published.
 
