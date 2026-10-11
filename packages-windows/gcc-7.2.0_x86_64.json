@@ -8,5 +8,7 @@
     "ID": "windows-gcc-7.2.0_x86_64",
     "OS": "windows",
     "Arch": "amd64",
-    "Version": "7.2.0"
+    "Version": "7.2.0",
+    "ArchiveRoot": "gcc7.2.0_x86_64-w64-mingw32",
+    "BinDir": "mingw64/bin"
 }

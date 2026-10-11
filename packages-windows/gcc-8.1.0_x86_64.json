@@ -9,5 +9,6 @@
     "ID": "windows-gcc-8.1.0_x86_64",
     "OS": "windows",
     "Arch": "amd64",
-    "Version": "8.1.0"
+    "Version": "8.1.0",
+    "ArchiveRoot": "gcc8.1.0_x86_64-w64-mingw32"
 }

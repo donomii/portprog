@@ -6,6 +6,6 @@
     "Plan"  :   "zipWithDirectory",
     "ID": "windows-sdl_image-2.0.1",
     "OS": "windows",
-    "Arch": "all",
+    "Arch": "amd64",
     "Version": "2.0.1"
 }

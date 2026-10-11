@@ -121,3 +121,11 @@ portprog --no-install
 ```
 
 After adding or changing recipes, validate the complete catalog and run the regression suite. Tests use local temporary files and archives; they do not depend on internet access.
+
+## Historical source prerequisites
+
+The retained CockroachDB `beta-20170209` recipe predates Go modules. Its [upstream toolchain declaration](https://github.com/cockroachdb/cockroach/blob/beta-20170209/.go-version) requires Go 1.7 or 1.8, and its [Makefile](https://github.com/cockroachdb/cockroach/blob/beta-20170209/Makefile) derives GOPATH from the checkout's location rather than honoring an installation prefix. The current module-based Go installation plan cannot build that historical checkout; it reports the missing module file instead of writing through the upstream GOPATH layout. Retaining the recipe does not imply that the current Go profile can compile it.
+
+The DBus recipe selects the verified `dbus-1.12.28` tag. Its [autogen script](https://gitlab.freedesktop.org/dbus/dbus/-/blob/dbus-1.12.28/autogen.sh) requires Autoconf, Automake, and Libtool before configuration, in addition to the upstream compiler and library prerequisites. Source recipes are not portable binary packages and may need historical build environments.
+
+The Cmder 1.3.11 bundle contains a 64-bit Git-for-Windows distribution, so that recipe is restricted to Windows AMD64. Compiler paths in all three retained Windows GCC archives were checked against their actual archive listings; the 32-bit compiler uses `mingw32/bin` and the 64-bit compilers use `mingw64/bin` inside their selected archive roots.

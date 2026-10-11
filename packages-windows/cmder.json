@@ -8,5 +8,5 @@
 	"BinDir":	".",
     "ID": "windows-cmder",
     "OS": "windows",
-    "Arch": "all"
+    "Arch": "amd64"
 }

@@ -8,5 +8,6 @@
     "OS": "linux",
     "Arch": "all",
     "Type": "source",
+    "BinDir": "bin",
     "Version": "3.7.2"
 }

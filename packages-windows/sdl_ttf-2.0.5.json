@@ -6,6 +6,6 @@
     "Plan"  :   "zipWithDirectory",
     "ID": "windows-sdl_ttf-2.0.5",
     "OS": "windows",
-    "Arch": "all",
+    "Arch": "amd64",
     "Version": "2.0.14"
 }

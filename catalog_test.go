@@ -159,13 +159,35 @@ func TestLoadCatalogRejectsDuplicateIDs(t *testing.T) {
 	}
 }
 
+func TestSDLArchitectureSelection(t *testing.T) {
+	catalog, err := loadCatalog(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := []string{"windows-sdl-nightly-mingw", "windows-sdl_image-2.0.1", "windows-sdl_ttf-2.0.5"}
+	for _, id := range ids {
+		for _, arch := range []string{"amd64", "386"} {
+			identity := id
+			if arch == "386" {
+				identity += "-386"
+			}
+			if _, err := selectPackages(catalog, []string{identity}, "windows", arch); err != nil {
+				t.Fatalf("package %s must support Windows %s: %v", identity, arch, err)
+			}
+			if _, err := selectPackages(catalog, []string{identity}, "windows", "arm64"); err == nil {
+				t.Fatalf("package %s contains x86 libraries and must reject Windows ARM64", identity)
+			}
+		}
+	}
+}
+
 func TestShippedCatalogAndProfiles(t *testing.T) {
 	catalog, err := loadCatalog(".")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(catalog) < 84 {
-		t.Fatalf("expected all 73 legacy recipes, eight Go recipes, and three Python recipes, received %d", len(catalog))
+	if len(catalog) < 87 {
+		t.Fatalf("expected 73 legacy recipes, eight Go recipes, three Python recipes, and three SDL variants, received %d", len(catalog))
 	}
 	filenames, err := filepath.Glob("profiles/*.json")
 	if err != nil || len(filenames) == 0 {

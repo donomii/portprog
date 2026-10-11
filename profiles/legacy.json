@@ -53,7 +53,6 @@
             "windows-aws-cli",
             "windows-bluegriffon-3.0.1",
             "windows-cmake",
-            "windows-cmder",
             "windows-codeblocks-16.01",
             "windows-gcc-7.2.0_i686",
             "windows-gimphoto",
@@ -81,9 +80,9 @@
             "windows-python37",
             "windows-quickviewer",
             "windows-racketprogs",
-            "windows-sdl-nightly-mingw",
-            "windows-sdl_image-2.0.1",
-            "windows-sdl_ttf-2.0.5",
+            "windows-sdl-nightly-mingw-386",
+            "windows-sdl_image-2.0.1-386",
+            "windows-sdl_ttf-2.0.5-386",
             "windows-sqlite3-13230100",
             "windows-squeak-5.1",
             "windows-wget-1.11.4",
@@ -118,13 +117,9 @@
         ],
         "windows/arm64": [
             "data-monthly-earthquakes",
-            "windows-cmder",
             "windows-make-4.2",
             "windows-openalsoft-git",
-            "windows-racketprogs",
-            "windows-sdl-nightly-mingw",
-            "windows-sdl_image-2.0.1",
-            "windows-sdl_ttf-2.0.5"
+            "windows-racketprogs"
         ]
     }
 }
