@@ -1,8 +1,13 @@
 {
     "Name"  :   "make-3.8.1",
-    "Zip"   :   "make-3.8.1.tar.gz",
-    "Url"   :   "http://gnuwin32.sourceforge.net/downlinks/make-bin-zip.php",
+    "Zip"   :   "make-3.81-bin.zip",
+    "Url"   :   "https://downloads.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory",
-	"Type"  :   "Application"
+    "Plan"  :   "zipWithNoDirectory",
+	"Type"  :   "application",
+    "ID": "windows-make-3.8.1",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "3.81",
+    "BinDir": "bin"
 }

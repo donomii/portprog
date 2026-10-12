@@ -5,5 +5,8 @@
 	"Fetch" :	"web",
     "Plan"  :   "msi",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-aws-cli",
+    "OS": "windows",
+    "Arch": "386"
 }

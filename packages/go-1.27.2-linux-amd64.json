@@ -1,0 +1,15 @@
+{
+    "ID": "go-1.27.2-linux-amd64",
+    "Name": "go-1.27.2-linux-amd64",
+    "Version": "1.27.2",
+    "OS": "linux",
+    "Arch": "amd64",
+    "Zip": "go1.27.2.linux-amd64.tar.gz",
+    "Url": "https://go.dev/dl/go1.27.2.linux-amd64.tar.gz",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "Type": "application",
+    "ArchiveRoot": "go",
+    "BinDir": "bin",
+    "SHA256": "ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5"
+}

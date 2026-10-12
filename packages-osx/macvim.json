@@ -5,5 +5,8 @@
 	"Fetch" :	"web",
     "Plan"  :   "dmg",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "darwin-macvim",
+    "OS": "darwin",
+    "Arch": "amd64"
 }

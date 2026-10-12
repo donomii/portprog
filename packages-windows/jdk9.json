@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-jdk9",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "9.0.7.1"
 }

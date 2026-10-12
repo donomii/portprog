@@ -5,5 +5,10 @@
     "Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
     "Type"  :   "application",
-    "BinDir":	"/bin"
+    "BinDir":	"bin",
+    "ID": "windows-go-1.17.1",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "1.17.1",
+    "ArchiveRoot": "go"
 }

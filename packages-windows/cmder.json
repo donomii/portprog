@@ -4,6 +4,9 @@
     "Url"   :   "https://github.com/cmderdev/cmder/releases/download/v1.3.11/cmder.7z",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application",
-	"BinDir":	"/"
+	"Type"  :   "application",
+	"BinDir":	".",
+    "ID": "windows-cmder",
+    "OS": "windows",
+    "Arch": "amd64"
 }

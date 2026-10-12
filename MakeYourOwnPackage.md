@@ -1,43 +1,131 @@
 # Make your own package
 
-Making your own packages is simple and easy.
+A package recipe is one JSON object describing a download, its installation plan, and its supported platform. Portprog validates recipes before downloading or installing them. Invalid JSON, unknown fields, unsupported plans, unsafe paths, missing dependencies, and dependency cycles are errors.
 
-1. Open the packages-devel directory
+Put a recipe in the `packages-develop` directory under the Portprog root for local development. The other catalog directories are `packages` for Linux, `packages-windows` for Windows, `packages-osx` for macOS, and `packages-data` for data. Each recipe must explicitly declare its platform; its directory does not supply missing fields.
 
-2. Create a JSON file with the details of your program
+Validate the complete catalog and profiles without accessing the network:
 
-3. In a terminal, run ```portprog --file packages-windows\yourfile.json```
+```text
+portprog --validate
+```
 
-4. Run ```environment.bat``` and then test your new package
+Install only development recipes and their declared dependencies:
 
-## The JSON file
+```text
+portprog --devel
+```
 
-What do you put in your JSON file?  Let's take a look at cmder.json
+A standalone recipe can be selected by its absolute path. Relative paths are resolved from the caller's working directory:
+
+```text
+portprog --file /absolute/path/to/package.json
+```
+
+## Recipe example
+
+This is the published Go 1.27.2 archive for Linux AMD64. The checksum comes from [Go's release metadata](https://go.dev/dl/?mode=json).
 
 ```json
 {
-    	"Name"  :   "cmder",
-    	"Zip"   :   "cmder.7z",
-    	"Url"   :   "https://github.com/cmderdev/cmder/releases/download/v1.3.11/cmder.7z",
-	"Fetch" :   "web",
-	"Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application",
-	"BinDir":   "/"
+    "ID": "go-1.27.2-linux-amd64",
+    "Name": "go-1.27.2-linux-amd64",
+    "Version": "1.27.2",
+    "OS": "linux",
+    "Arch": "amd64",
+    "Zip": "go1.27.2.linux-amd64.tar.gz",
+    "Url": "https://go.dev/dl/go1.27.2.linux-amd64.tar.gz",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "Type": "application",
+    "ArchiveRoot": "go",
+    "BinDir": "bin",
+    "SHA256": "ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5"
 }
 ```
 
-The JSON file contains all the information needed to download and install your program.  Let's take a look at the fields:
+Do not copy that ID into another recipe: IDs must be unique throughout the catalog. An installation directory belongs to one selected package. Dependencies are installed before the packages that need them.
 
-* Url - Download the zip from here
-* Zip - The name of the zip file that will appear on disk.  Portprog uses wget to download the zips.
-* Name - is the name of the target directory in the install directory.  See the options ```zipWithDirectory``` and ```zipWithNoDirectory``` for more information
-* Fetch - only web is supported for now
-* Plan - Currently has three options, depending on the zip type.
-	1. ```zipWithDirectory``` - Your program is in a zip file (.zip, .tar, .7z, .rar).  The zip file contains a directory, and all your programs are inside that.  In this case, you MUST use the name of that directory in the ```Name``` field.
-	2. ```zipWithNoDirectory``` - Your program is in a zip file, but all the files are at the top level.  Portprog will create the directory named in the ```Name``` field, and unpack your directory there.
-	3. ```msi``` - You are using an MSI installer package.  The package will be unpacked into the directory named in the ```Name``` field, and your program probably won't work
-	4. There is no 4
-* Type - Only application, for now.  If your zip file doesn't contain an application (e.g. it is just data), leave the field empty
-* BinDir - The directory, _inside the zip file_, that contains the executables for your program.  Usually "/bin" or just "/".  If "", this directory will not be added to the path variable.
+## Fields
 
-Good luck and enjoy!
+| Field | Meaning and use |
+| --- | --- |
+| `ID` | Required stable package identity. Refer to this value in profiles and dependency lists. It must be a safe filename component. |
+| `Name` | Required directory owned by this package inside the installation directory. It is independent of the directory inside an archive. Two selected packages cannot share it, including case-only differences. |
+| `Version` | Optional version label. The lockfile records exact archive bytes or a Git commit; this label alone does not pin a moving URL. |
+| `OS` | Required: `windows`, `darwin`, `linux`, or `all`. Use `all` only for genuinely portable data or sources. |
+| `Arch` | Required: `386`, `amd64`, `arm64`, `arm`, or `all`. Use `all` only when the package supports every processor covered by its operating-system declaration. |
+| `Url` | Required HTTPS download or repository URL. Absolute local `file:///` URLs are also supported for local fixtures; remote file hosts and URL credentials are rejected. |
+| `Fetch` | Required: `web` for an archive or data file; `git` for a repository. |
+| `Zip` | Required local filename for `web` downloads, including its actual extension. It must not contain a URL or directory. Omit it for Git. |
+| `Plan` | Required installation plan from the table below. Values are case-sensitive. |
+| `ArchiveRoot` | Optional relative directory inside an archive whose contents become the package installation. Use it when the layout is known; do not guess the archive root from its filename. |
+| `SHA256` | Optional 64-digit published hexadecimal checksum. When present, downloaded bytes must match. Recipes without a published checksum acquire an exact digest when locked; that does not establish upstream authenticity independently of HTTPS. |
+| `Branch` | Optional Git branch, tag, or commit to resolve. With no value, use the repository default. The lockfile records the resolved commit. |
+| `BinDir` | Optional executable directory relative to the installed package, such as `bin`; use `.` for its root. Omit it when there are no executables to add to PATH. |
+| `BinDirs` | Optional array of additional relative executable directories. Both this array and `BinDir` contribute to the generated environment. |
+| `LibDir` | Optional relative library-directory metadata. It does not automatically change the system linker configuration. |
+| `Dependencies` | Optional array of other package IDs needed first. Missing packages, cycles, duplicate dependencies, and incompatible dependency platforms are rejected. |
+| `Deletes` | Optional relative file paths to remove from this package's staged contents before installation. Paths cannot escape the package or identify the whole installation. |
+| `Type` | Optional `application`, `source`, or `data`. Data packages require `rawData`. |
+| `Command` | Arbitrary command strings are unsupported. Omit this field or leave it empty. |
+
+All local paths must use forward slashes and remain inside the package. Absolute paths, parent traversal, empty path components, control characters, Windows reserved filenames, and PATH separators are rejected. Existing recipes using `/bin` or `/` must use `bin` or `.` instead.
+
+## Installation plans
+
+| Plan | Behavior |
+| --- | --- |
+| `zipWithDirectory` | Extract an archive whose files are inside one top-level directory. An explicit `ArchiveRoot` selects that directory; otherwise it must be unambiguous. |
+| `zipWithNoDirectory` | Extract archive contents directly into the package's installation directory. |
+| `rawData` | Store a downloaded data file without treating it as an archive. |
+| `standardConfigure` | Build sources using their configure or bootstrap script and install under the staged package prefix. An existing compiler and upstream build prerequisites are required. |
+| `gitAndMake` | Build a locked source checkout using make and the staged installation prefix. |
+| `goGetAndMake` | Build a locked Git checkout using Go and install executables under the staged package directory. |
+| `cmake` | Configure, build, and install sources using CMake under the staged package prefix. |
+| `msi` | Extract Windows MSI contents into the package directory. Windows only. |
+| `dmg` | Read a macOS disk image and copy application contents into the package directory. macOS only. |
+| `pkg` | Expand macOS package payloads into the package directory without running system installation scripts. macOS only. |
+
+Archive extraction supports ZIP, TAR, gzip, and bzip2 directly. Other supported archive formats require 7-Zip. Source recipes may need additional upstream tools and libraries; declaring a recipe does not install those prerequisites unless they are listed as dependencies.
+
+## Profiles and exact versions
+
+Profiles are JSON files in the `profiles` directory under the Portprog root. Each contains a `description` explaining its purpose and a `packages` object mapping platforms to package-ID arrays. Platform keys are `OS/architecture`, `OS/all`, or `all/all`; matching entries are combined without duplicates.
+
+```json
+{
+    "description": "Go for Linux AMD64.",
+    "packages": {
+        "linux/amd64": ["go-1.27.2-linux-amd64"]
+    }
+}
+```
+
+The supplied profiles are `default` (one current Go toolchain), `c-cpp` (C/C++ tools and sources), `scripting` (current Windows Python embeddable runtimes), and `legacy` (retained platform-compatible catalog entries). Legacy entries may depend on unavailable historical download servers. The scripting profile supports Windows only; the embeddable Python distribution does not include pip or development headers.
+
+`--profile NAME` chooses a profile. The editable `default_profile` setting defaults to `default`. `--no-gcc` excludes GCC packages and `--no-golang` excludes Go toolchains from selection; these exclusions also apply when dependencies are resolved.
+
+`--lock` resolves selected packages and writes `portprog.lock.json` without installing them:
+
+```text
+portprog --profile default --lock
+```
+
+`--offline` uses an existing lockfile and already cached artifacts without network access. It fails if required locked content is missing. Offline source builds are unsupported; `--bundle` exports installed images that can be used for offline installation and repair.
+
+`--no-install` only regenerates activation scripts from installation receipts. It does not download, resolve a lockfile, or modify installed package contents:
+
+```text
+portprog --no-install
+```
+
+After adding or changing recipes, validate the complete catalog and run the regression suite. Tests use local temporary files and archives; they do not depend on internet access.
+
+## Historical source prerequisites
+
+The retained CockroachDB `beta-20170209` recipe predates Go modules. Its [upstream toolchain declaration](https://github.com/cockroachdb/cockroach/blob/beta-20170209/.go-version) requires Go 1.7 or 1.8, and its [Makefile](https://github.com/cockroachdb/cockroach/blob/beta-20170209/Makefile) derives GOPATH from the checkout's location rather than honoring an installation prefix. The current module-based Go installation plan cannot build that historical checkout; it reports the missing module file instead of writing through the upstream GOPATH layout. Retaining the recipe does not imply that the current Go profile can compile it.
+
+The DBus recipe selects the verified `dbus-1.12.28` tag. Its [autogen script](https://gitlab.freedesktop.org/dbus/dbus/-/blob/dbus-1.12.28/autogen.sh) requires Autoconf, Automake, and Libtool before configuration, in addition to the upstream compiler and library prerequisites. Source recipes are not portable binary packages and may need historical build environments.
+
+The Cmder 1.3.11 bundle contains a 64-bit Git-for-Windows distribution, so that recipe is restricted to Windows AMD64. Compiler paths in all three retained Windows GCC archives were checked against their actual archive listings; the 32-bit compiler uses `mingw32/bin` and the 64-bit compilers use `mingw64/bin` inside their selected archive roots.

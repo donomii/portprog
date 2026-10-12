@@ -4,5 +4,9 @@
     "Url"   :   "https://github.com/kcat/openal-soft",
 	"Fetch" :	"git",
 	"Branch" : "master",
-    "Plan"  :   "cmake"
+    "Plan"  :   "cmake",
+    "ID": "windows-openalsoft-git",
+    "OS": "windows",
+    "Arch": "all",
+    "Type": "source"
 }

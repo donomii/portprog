@@ -5,5 +5,8 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-sqlite3-13230100",
+    "OS": "windows",
+    "Arch": "386"
 }

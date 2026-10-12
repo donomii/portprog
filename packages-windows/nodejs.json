@@ -3,7 +3,11 @@
     "Zip"   :   "node-v10.15.3-win-x86.zip",
     "Url"   :   "https://nodejs.org/dist/v10.15.3/node-v10.15.3-win-x86.zip",
 	"Fetch" :	"web",
-    "Plan"  :   "ZipWithDirectory",
+    "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-nodejs",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "10.15.3"
 }

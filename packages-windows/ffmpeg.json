@@ -5,5 +5,8 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDirs":	["/bin"]
+	"BinDirs":	["bin"],
+    "ID": "windows-ffmpeg",
+    "OS": "windows",
+    "Arch": "amd64"
 }

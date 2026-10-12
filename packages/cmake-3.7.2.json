@@ -3,5 +3,11 @@
     "Zip"   :   "cmake-3.7.2.tar.gz",
     "Url"   :   "https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "standardConfigure"
+    "Plan"  :   "standardConfigure",
+    "ID": "linux-cmake-3.7.2",
+    "OS": "linux",
+    "Arch": "all",
+    "Type": "source",
+    "BinDir": "bin",
+    "Version": "3.7.2"
 }

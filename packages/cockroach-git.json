@@ -1,7 +1,11 @@
 {
     "Name"  :   "cockroach",
-    "Url"   :   "github.com/cockroachdb/cockroach",
+    "Url"   :   "https://github.com/cockroachdb/cockroach",
 	"Fetch" :	"git",
     "Plan"  :   "goGetAndMake",
-    "Branch":   "beta-20170209"
+    "Branch":   "beta-20170209",
+    "ID": "linux-cockroach-git",
+    "OS": "linux",
+    "Arch": "all",
+    "Type": "source"
 }

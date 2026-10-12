@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/release/bin"
+	"BinDir":	"release/bin",
+    "ID": "windows-graphviz",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "2.38"
 }

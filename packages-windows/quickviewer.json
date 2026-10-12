@@ -4,5 +4,9 @@
     "Url"   :   "https://github.com/kanryu/quickviewer/releases/download/v1.1.0/QuickViewer-1.1.0-x86.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
-	"Type"  :   "Application"
+	"Type"  :   "application",
+    "ID": "windows-quickviewer",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "1.1.0"
 }

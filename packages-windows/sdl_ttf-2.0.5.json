@@ -3,5 +3,9 @@
     "Zip"   :   "SDL2_ttf-devel-2.0.14-mingw.tar.gz",
     "Url"   :   "https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-devel-2.0.14-mingw.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory"
+    "Plan"  :   "zipWithDirectory",
+    "ID": "windows-sdl_ttf-2.0.5",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "2.0.14"
 }

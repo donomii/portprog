@@ -4,6 +4,10 @@
     "Url"   :   "https://download.kde.org/stable/krita/4.1.0/krita-x86-4.1.0.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	"Type"  :   "Application",
-	"BinDir":	"/bin"
+	"Type"  :   "application",
+	"BinDir":	"bin",
+    "ID": "windows-krita",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "4.1.0"
 }

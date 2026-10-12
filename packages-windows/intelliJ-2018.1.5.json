@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-intelliJ-2018.1.5",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "2018.1.5"
 }

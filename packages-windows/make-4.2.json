@@ -1,9 +1,14 @@
 {
     "Name"  :   "make-4.2",
     "Zip"   :   "make-4.2.tar.gz",
-    "Url"   :   "http://ftp.gnu.org/gnu/make/make-4.2.tar.gz",
+    "Url"   :   "https://ftp.gnu.org/gnu/make/make-4.2.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "zipWithDirectory",
-	"Type"  :   "CustomCommand",
-	"Command": "build_w32.bat gcc"
+    "Plan"  :   "standardConfigure",
+	"Type"  :   "source",
+    "ID": "windows-make-4.2",
+    "OS": "windows",
+    "Arch": "all",
+    "Version": "4.2",
+    "ArchiveRoot": "make-4.2",
+    "BinDir": "bin"
 }

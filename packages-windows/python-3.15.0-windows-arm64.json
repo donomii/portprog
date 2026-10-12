@@ -1,0 +1,14 @@
+{
+    "ID": "python-3.15.0-windows-arm64",
+    "Name": "python-3.15.0-windows-arm64",
+    "Version": "3.15.0",
+    "OS": "windows",
+    "Arch": "arm64",
+    "Zip": "python-3.15.0-embed-arm64.zip",
+    "Url": "https://www.python.org/ftp/python/3.15.0/python-3.15.0-embed-arm64.zip",
+    "Fetch": "web",
+    "Plan": "zipWithNoDirectory",
+    "Type": "application",
+    "BinDir": ".",
+    "SHA256": "abedaa8460572f9bade5e332db5ee0dc95c2dbf6c8dec687a1f03c3e6cd7f7d4"
+}

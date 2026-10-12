@@ -1,9 +1,13 @@
 {
     "Name"  :   "gimphoto-24.1",
     "Zip"   :   "gimphoto-24.1.zip",
-    "Url"   :   "http://sourceforge.net/projects/gimphoto/files/Gimphoto_24.1/gimphoto-24.1.zip",
+    "Url"   :   "https://sourceforge.net/projects/gimphoto/files/Gimphoto_24.1/gimphoto-24.1.zip",
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
-	"Type"  :   "Application",
-	"BinDir":	"/bin"
+	"Type"  :   "application",
+	"BinDir":	"bin",
+    "ID": "windows-gimphoto",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "24.1"
 }

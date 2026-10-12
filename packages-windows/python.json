@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/"
+	"BinDir":	".",
+    "ID": "windows-python",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "3.7.0b1"
 }

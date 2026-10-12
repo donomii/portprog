@@ -1,0 +1,14 @@
+{
+    "description": "Python 3.15.0 embeddable runtime for Windows 386, AMD64, and ARM64, verified against published SHA256 hashes. Python's embeddable distribution does not include pip or development headers.",
+    "packages": {
+        "windows/amd64": [
+            "python-3.15.0-windows-amd64"
+        ],
+        "windows/386": [
+            "python-3.15.0-windows-386"
+        ],
+        "windows/arm64": [
+            "python-3.15.0-windows-arm64"
+        ]
+    }
+}

@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-curl-7.60.0",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "7.60.0"
 }

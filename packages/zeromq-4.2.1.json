@@ -3,5 +3,10 @@
     "Zip"   :   "zeromq-4.2.1.tar.gz",
     "Url"   :   "https://github.com/zeromq/libzmq/releases/download/v4.2.1/zeromq-4.2.1.tar.gz",
 	"Fetch" :	"web",
-    "Plan"  :   "standardConfigure"
+    "Plan"  :   "standardConfigure",
+    "ID": "linux-zeromq-4.2.1",
+    "OS": "linux",
+    "Arch": "all",
+    "Type": "source",
+    "Version": "4.2.1"
 }

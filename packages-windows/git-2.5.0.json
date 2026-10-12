@@ -5,5 +5,9 @@
 	"Fetch" :	"web",
     "Plan"  :   "zipWithNoDirectory",
 	"Type"  :   "application",
-	"BinDir":	"/bin"
+	"BinDir":	"bin",
+    "ID": "windows-git-2.5.0",
+    "OS": "windows",
+    "Arch": "amd64",
+    "Version": "2.15.0"
 }

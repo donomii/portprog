@@ -1,0 +1,15 @@
+{
+    "ID": "go-1.27.2-windows-arm64",
+    "Name": "go-1.27.2-windows-arm64",
+    "Version": "1.27.2",
+    "OS": "windows",
+    "Arch": "arm64",
+    "Zip": "go1.27.2.windows-arm64.zip",
+    "Url": "https://go.dev/dl/go1.27.2.windows-arm64.zip",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "Type": "application",
+    "ArchiveRoot": "go",
+    "BinDir": "bin",
+    "SHA256": "5c4b294f23b558619ae8a4aa94d023e3bca03f52c8398bb41b9026002b0013de"
+}

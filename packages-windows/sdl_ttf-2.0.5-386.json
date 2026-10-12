@@ -1,0 +1,11 @@
+{
+    "Name": "SDL2_ttf",
+    "Zip": "SDL2_ttf-devel-2.0.14-mingw.tar.gz",
+    "Url": "https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-devel-2.0.14-mingw.tar.gz",
+    "Fetch": "web",
+    "Plan": "zipWithDirectory",
+    "ID": "windows-sdl_ttf-2.0.5-386",
+    "OS": "windows",
+    "Arch": "386",
+    "Version": "2.0.14"
+}
