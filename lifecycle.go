@@ -24,6 +24,9 @@ func readReceipt(directory string, b Config) (Receipt, error) {
 	if err := validateLockedPackage(receipt.Package, b); err != nil {
 		return Receipt{}, fmt.Errorf("receipt %s: %w", path, err)
 	}
+	if receipt.Root != "" && !validRelocationRoot(receipt.Root) {
+		return Receipt{}, fmt.Errorf("receipt %s has invalid installation root %q", path, receipt.Root)
+	}
 	seen := make(map[string]bool)
 	for _, file := range receipt.Files {
 		if !safeReceiptPath(file.Path) || seen[file.Path] || file.SHA256 != "" && !validDigest(file.SHA256) {
@@ -134,6 +137,9 @@ func activateInstalled(b Config) error {
 		if err := verifyReceipt(filepath.Join(b.InstallDir, receipt.Package.Package.Name), receipt); err != nil {
 			return err
 		}
+		if err := checkRelocation(b, receipt); err != nil {
+			return err
+		}
 		packages = append(packages, receipt.Package)
 	}
 	if err := writeEnvironment(b, packages); err != nil {
@@ -151,6 +157,9 @@ func listInstalled(b Config) error {
 	var failures []error
 	for _, receipt := range receipts {
 		err := verifyReceipt(filepath.Join(b.InstallDir, receipt.Package.Package.Name), receipt)
+		if err == nil {
+			err = checkRelocation(b, receipt)
+		}
 		logReceipt(b.Output, receipt, err)
 		if err != nil {
 			failures = append(failures, err)
@@ -202,7 +211,12 @@ func repairInstalled(b Config) error {
 				return fmt.Errorf("repair %s from recorded artifact %s: %w", locked.Package.ID, locked.SHA256, err)
 			}
 			logInstalled(b.Output, locked.Package)
+		} else if err := relocatePackage(b, receipt); err != nil {
+			return err
 		}
+	}
+	if err := relocateInstalled(b); err != nil {
+		return err
 	}
 	return activateInstalled(b)
 }

@@ -41,6 +41,16 @@ type Package struct {
 	ArchiveRoot  string
 	SHA256       string
 	Dependencies []string
+	Patches      []Patch `json:",omitempty"`
+	RelocateFrom string  `json:",omitempty"`
+}
+
+type Patch struct {
+	Phase   string
+	File    string
+	Find    string
+	Replace string
+	Count   int
 }
 
 type LockedPackage struct {
@@ -74,6 +84,7 @@ type Receipt struct {
 	SchemaVersion int             `json:"schema_version"`
 	Package       LockedPackage   `json:"package"`
 	Files         []InstalledFile `json:"files"`
+	Root          string          `json:"root,omitempty"`
 }
 
 type Settings struct {

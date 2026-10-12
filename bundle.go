@@ -129,6 +129,8 @@ func bundleInstalledPackage(b Config, locked LockedPackage, cache string) (Locke
 	p.OS, p.Arch, p.SHA256 = b.OS, b.Arch, digest
 	p.ArchiveRoot, p.Branch, p.Command = "", "", ""
 	p.Deletes = nil
+	p.Patches = nil
+	p.RelocateFrom = receipt.Root
 	return LockedPackage{Package: p, SHA256: digest, Size: stat.Size()}, nil
 }
 

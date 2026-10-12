@@ -54,6 +54,9 @@ func installPackage(b Config, p LockedPackage) error {
 	if err := copyInstallTree(prepared, payload, p.Package.Deletes, extractionLimit(b)); err != nil {
 		return fmt.Errorf("prepare installation of %q in %q: %w", name, stage, err)
 	}
+	if err := patchInstalledTree(b, p.Package, payload, stage, prepared); err != nil {
+		return fmt.Errorf("patch package %q; working files retained at %q: %w", name, stage, err)
+	}
 	files, err := collectInstalledFiles(payload)
 	if err != nil {
 		return err
@@ -70,7 +73,14 @@ func installPackage(b Config, p LockedPackage) error {
 	if err := checkInstalledPaths(payload, p.Package); err != nil {
 		return err
 	}
-	receipt := Receipt{SchemaVersion: 1, Package: p, Files: files}
+	receipt := Receipt{SchemaVersion: 1, Package: p, Files: files, Root: installationRoot(b)}
+	if err := createReceipt(payload, receipt); err != nil {
+		return err
+	}
+	return publishInstallation(b, name, payload)
+}
+
+func createReceipt(payload string, receipt Receipt) error {
 	encoded, err := json.MarshalIndent(receipt, "", "  ")
 	if err != nil {
 		return err
@@ -78,7 +88,7 @@ func installPackage(b Config, p LockedPackage) error {
 	receiptPath := filepath.Join(payload, ".portprog-receipt.json")
 	file, err := os.OpenFile(receiptPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("create receipt for package %q: %w", name, err)
+		return fmt.Errorf("create receipt for package %q: %w", receipt.Package.Package.Name, err)
 	}
 	_, writeErr := file.Write(append(encoded, '\n'))
 	closeErr := file.Close()
@@ -88,7 +98,7 @@ func installPackage(b Config, p LockedPackage) error {
 	if closeErr != nil {
 		return closeErr
 	}
-	return publishInstallation(b, name, payload)
+	return nil
 }
 
 func checkInstalledPaths(root string, p Package) error {
@@ -218,6 +228,9 @@ func preparePackage(b Config, locked LockedPackage, artifact, stage string) (str
 	case "standardConfigure", "gitAndMake", "goGetAndMake", "cmake":
 		source, err := sourceRoot(extracted, p, false)
 		if err != nil {
+			return "", err
+		}
+		if err := applyTextPatches(b, p, source, "source"); err != nil {
 			return "", err
 		}
 		return buildSource(b, p, source, stage)

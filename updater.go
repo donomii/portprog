@@ -206,6 +206,9 @@ func installSelected(b Config, options commandOptions, selectedExplicitly bool) 
 		}
 		if readErr == nil && receipt.Package.SHA256 == p.SHA256 && packagesEqual(receipt.Package.Package, p.Package) {
 			if verifyErr := verifyReceipt(filepath.Join(b.InstallDir, p.Package.Name), receipt); verifyErr == nil {
+				if err := relocatePackage(b, receipt); err != nil {
+					return err
+				}
 				logInstalled(b.Output, p.Package)
 				continue
 			}
@@ -217,6 +220,9 @@ func installSelected(b Config, options commandOptions, selectedExplicitly bool) 
 			return fmt.Errorf("install %s (%s): %w", p.Package.ID, p.Package.Version, err)
 		}
 		logInstalled(b.Output, p.Package)
+	}
+	if err := relocateInstalled(b); err != nil {
+		return err
 	}
 	if err := activateInstalled(b); err != nil {
 		return err

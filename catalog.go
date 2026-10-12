@@ -72,6 +72,9 @@ func validatePackage(recipe Package) error {
 	if err := validatePackagePlan(recipe); err != nil {
 		return err
 	}
+	if err := validatePatches(recipe); err != nil {
+		return err
+	}
 	paths := append([]string{recipe.BinDir, recipe.LibDir, recipe.ArchiveRoot}, recipe.BinDirs...)
 	paths = append(paths, recipe.Deletes...)
 	for _, relative := range paths {
