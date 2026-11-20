@@ -13,3 +13,10 @@ portprog.exe
 langlibs
 installs
 packages-develop
+portable
+cache
+state
+trash
+dist
+portprog.lock.json
+packs

@@ -1,0 +1,25 @@
+MODULE state
+
+FUNCTION ensure state directories
+    create package store, digest cache, receipt, and recoverable-trash roots
+        only through contained paths without symbolic-link components
+    require the Portprog-owned Go module boundary directly under install_root,
+        creating it when absent and rejecting foreign content without overwrite
+
+FUNCTION read or write lockfile and receipt
+    strictly decode or encode the schema in SPEC.md
+    validate all fields, UTC timestamps, dependency order, and portable paths
+    write through a synchronized temporary file
+    preserve any prior state file in local trash
+    atomically publish the new file and restore the prior file if publication
+        fails
+
+FUNCTION move path to trash
+    require the source to be a child of the Portprog base directory
+    choose a unique UTC-stamped destination beneath the trash root
+    rename the source there and return the recovery path
+
+FUNCTION determine package health
+    compare lock package, receipt, platform, source, checksum, exact store path, and
+        every expected executable
+    return installed, missing, outdated, or damaged with an explanation

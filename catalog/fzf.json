@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "name": "fzf",
+  "version": "0.74.3",
+  "description": "An interactive command-line fuzzy finder for files, history, processes, and arbitrary text streams.",
+  "homepage": "https://junegunn.github.io/fzf/",
+  "license": "MIT",
+  "dependencies": [],
+  "assets": [
+    {
+      "os": "darwin",
+      "arch": "amd64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-darwin_amd64.tar.gz",
+      "sha256": "b8a231250eedec244539ade3dc437bcd60e545a099c6cc0c8a11bdbd8574b9bc",
+      "size": 2084226,
+      "format": "tar.gz",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf"]
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-darwin_arm64.tar.gz",
+      "sha256": "1f8501cea4f9c0c2d6110d0ff75d0ec9451cd9d7524d9a26244a154ea89f3bd5",
+      "size": 1911796,
+      "format": "tar.gz",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf"]
+    },
+    {
+      "os": "linux",
+      "arch": "amd64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-linux_amd64.tar.gz",
+      "sha256": "3501a595e4b5c40a6b047340a0e8f805c46fd4e61ef95ef8a136ba8c61cf6f22",
+      "size": 2025378,
+      "format": "tar.gz",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf"]
+    },
+    {
+      "os": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-linux_arm64.tar.gz",
+      "sha256": "4a17a17b46bd0c4873e995533de508995c11572c0be0664a5dbcf13f60463046",
+      "size": 1853686,
+      "format": "tar.gz",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf"]
+    },
+    {
+      "os": "windows",
+      "arch": "amd64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-windows_amd64.zip",
+      "sha256": "cf5c137d9b391c3988c54af8f5fc490ffbef6f70444651e7d57fdb45ad04c8bd",
+      "size": 2203002,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf.exe"]
+    },
+    {
+      "os": "windows",
+      "arch": "arm64",
+      "url": "https://github.com/junegunn/fzf/releases/download/v0.74.3/fzf-0.74.3-windows_arm64.zip",
+      "sha256": "7d70c25a1229f3bbfcb56b4314f298c16ad61a258f9641b7acf08c513a40bd29",
+      "size": 1995989,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["fzf.exe"]
+    }
+  ]
+}

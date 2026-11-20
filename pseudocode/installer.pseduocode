@@ -1,0 +1,26 @@
+MODULE installer
+
+FUNCTION resolve requested lock
+    if refresh is false and a valid lock matches profile and platform, use it
+    otherwise resolve a new lock from catalog and profile
+
+FUNCTION install locked profile
+    validate lock compatibility and prepare state directories
+    for every package in dependency order
+        skip a healthy package
+        otherwise obtain its verified archive and install it transactionally
+    write the exact lockfile only after every package succeeds
+
+FUNCTION install one locked package
+    create a fresh staging directory beside the final versioned store path
+    extract with the configured expansion limit
+    preserve an existing same-version target in local trash
+    atomically rename staging to final target
+    create and atomically publish a receipt
+    on failure, preserve the failed state and restore the prior installation
+    after success, preserve an older version referenced by the old receipt
+
+FUNCTION remove package
+    validate the package name
+    move its store and receipt to recoverable local trash
+    report both recovery locations

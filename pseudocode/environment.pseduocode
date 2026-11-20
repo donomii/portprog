@@ -1,0 +1,20 @@
+MODULE environment
+
+FUNCTION profile binary paths
+    require every locked package to be healthy
+    resolve each declared binary directory beneath its package store
+    require every result to be a directory
+    return paths in profile order without duplicates
+
+FUNCTION print shell activation
+    for bash or zsh, fish, PowerShell, or cmd, safely quote all paths for that
+        shell and prepend them to its path variable
+    reject unsupported shells and shell-specific unsafe path characters
+
+FUNCTION open profile shell
+    derive verified binary paths
+    prepend them to the child environment only
+    choose the current user shell, cmd.exe on Windows, or /bin/sh on Unix when
+        the configured shell is missing or invalid
+    start it interactively with inherited input and output
+    return when the child shell exits without editing startup files

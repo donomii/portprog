@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "name": "starter",
+  "description": "A portable compiled-language starter kit with Go, Zig, ripgrep, jq, Ninja, and fzf.",
+  "packages": [
+    "go",
+    "zig",
+    "ripgrep",
+    "jq",
+    "ninja",
+    "fzf"
+  ]
+}

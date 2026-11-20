@@ -1,0 +1,24 @@
+MODULE downloader
+
+FUNCTION obtain package asset
+    validate checksum, size, and HTTPS URL
+    locate the digest-named cache object
+    if its size and checksum are valid, return it
+    otherwise preserve an existing invalid cache object in local trash
+    if offline mode is active, report the missing verified object
+    otherwise download it
+
+FUNCTION download asset
+    request the identity representation with the configured client timeout and
+        Portprog user agent
+    reject redirect loops, embedded credentials, and any redirect away from HTTPS
+    require HTTP 200
+    reject declared or streamed data over the configured byte limit
+    stream into a temporary cache file while computing SHA-256
+    synchronize and close all streams
+    require the optional publisher size and required checksum
+    set safe permissions and atomically publish to the digest path
+    preserve failed temporary data in local trash when possible
+
+FUNCTION verify cached file
+    require a regular file, optional exact size, and exact SHA-256

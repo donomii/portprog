@@ -1,0 +1,20 @@
+MODULE pack
+
+FUNCTION create offline pack
+    require a compatible lock, a contained ZIP destination, and every locked
+        digest as a verified cache object
+    write schema-1 pack metadata, the complete lock, and one stored archive per
+        unique digest into a temporary ZIP
+    synchronize and atomically publish the ZIP, preserving an older pack in
+        local trash
+
+FUNCTION restore offline pack
+    open the ZIP and index regular-file entries
+    reject links, duplicate names, unexpected names, oversized metadata,
+        unknown fields, duplicate JSON keys, incompatible platform metadata,
+        missing archives, extra archives, wrong sizes, and wrong checksums
+    import each archive through a temporary synchronized cache file
+    force offline mode and install the validated packed lock
+
+All failures close open resources and report cleanup failures with the original
+error.

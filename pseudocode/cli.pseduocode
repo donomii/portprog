@@ -1,0 +1,21 @@
+MODULE cli
+
+FUNCTION run command line
+    with no arguments, show the explained menu on a terminal or help on a pipe
+    with -test, run only the offline built-in checks
+    otherwise dispatch exactly one documented command and validate its arity
+
+Commands install and update resolve then install a profile. List reports each
+package's health. Plan reports selected immutable assets without changing
+state. Remove uses recoverable trash. Doctor independently validates the
+catalog, then checks a compatible lock, every locked cache object, receipts,
+and installed tools without repair; an absent cache object is informational
+while a present invalid object is an error. Config explains every setting. Env
+prints shell activation. Shell opens a prepared child shell. Pack creates an
+offline ZIP. Restore validates and installs one. Help explains every command.
+
+FUNCTION interactive menu
+    repeatedly explain actions 1 through 6
+    run the selected default-profile action
+    report a failed action without terminating the menu
+    exit only for selection 6 or end-of-input

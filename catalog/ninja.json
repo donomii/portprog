@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "name": "ninja",
+  "version": "1.13.2",
+  "description": "A small build system focused on fast, reliable execution of generated build graphs.",
+  "homepage": "https://ninja-build.org/",
+  "license": "Apache-2.0",
+  "dependencies": [],
+  "assets": [
+    {
+      "os": "darwin",
+      "arch": "amd64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip",
+      "sha256": "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b",
+      "size": 314051,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja"]
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip",
+      "sha256": "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b",
+      "size": 314051,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja"]
+    },
+    {
+      "os": "linux",
+      "arch": "amd64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip",
+      "sha256": "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6",
+      "size": 134040,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja"]
+    },
+    {
+      "os": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux-aarch64.zip",
+      "sha256": "fd2cacc8050a7f12a16a2e48f9e06fca5c14fc4c2bee2babb67b58be17a607fc",
+      "size": 126256,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja"]
+    },
+    {
+      "os": "windows",
+      "arch": "amd64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip",
+      "sha256": "07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65",
+      "size": 291570,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja.exe"]
+    },
+    {
+      "os": "windows",
+      "arch": "arm64",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-winarm64.zip",
+      "sha256": "e52f0bdef9dfb1003229dbd6508a508c4073fd017247002adc66e5e806cb0391",
+      "size": 270354,
+      "format": "zip",
+      "strip_components": 0,
+      "raw_path": "",
+      "bin_dirs": ["."],
+      "executables": ["ninja.exe"]
+    }
+  ]
+}

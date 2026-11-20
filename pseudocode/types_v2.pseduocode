@@ -1,0 +1,15 @@
+MODULE types_v2
+
+Define configuration settings for the base directory, profile, state paths,
+offline mode, download limit, extraction limit, and request timeout.
+
+Define platform as operating-system name plus CPU architecture.
+
+Define package manifest, platform asset, profile, resolved package, lockfile,
+installation receipt, package-health result, offline-pack manifest, application
+paths, runtime dependencies, and setting explanation exactly as described in
+SPEC.md.
+
+Use concrete function, clock, HTTP client, stream, string, integer, boolean,
+list, and record types. Do not allow an untyped escape value at module
+boundaries.

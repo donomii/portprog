@@ -1,5 +1,15 @@
+.PHONY: all build test demo install
+
 all: build
 
 build:
-	go get "github.com/probandula/figlet4go"
-	go build .
+	./build.sh
+
+test:
+	./test.sh
+
+demo:
+	./demo.sh
+
+install:
+	./install.sh

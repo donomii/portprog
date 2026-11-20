@@ -1,0 +1,24 @@
+MODULE paths
+
+FUNCTION derive application paths from settings
+    make the existing base directory absolute and resolve its symbolic links
+    resolve every configured path beneath it
+    derive the versioned package store, digest cache, and receipt directory
+    require every result to be a child of the base directory without existing
+        symbolic-link components
+    require configured roots and the lockfile not to overlap
+    return all application paths
+
+FUNCTION validate portable identifier or version
+    accept only the documented path-safe character set
+    otherwise report the field and rejected value
+
+FUNCTION resolve contained path
+    reject absolute, empty, current-directory, and parent-traversal values
+    join the value to the root
+    require the result to remain beneath the root
+    reject every existing symbolic-link component from root through result
+    return the contained path
+
+FUNCTION identify regular file
+    return true only when the path exists as a regular file

@@ -1,0 +1,15 @@
+MODULE main_v2
+
+FUNCTION create application
+    locate and load configuration
+    derive contained paths
+    detect operating system and CPU architecture
+    require a supported platform
+    create the timed HTTP client, clock, and standard streams
+    return the application record
+
+FUNCTION main
+    create the application and run the command line
+    catch unexpected failures at the outer boundary
+    print a diagnostic and return non-zero for any failure
+    return zero only when the requested task succeeds

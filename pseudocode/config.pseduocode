@@ -1,0 +1,21 @@
+MODULE config
+
+FUNCTION locate base directory
+    prefer a configuration file beside the executable
+    otherwise use a configuration file in the current directory for go run
+    otherwise report both expected locations
+
+FUNCTION load settings from base directory
+    open portprog.conf as UTF-8 line-oriented text
+    ignore blank and comment lines
+    require each remaining line to contain one documented key and value
+    reject unknown, duplicate, missing, or malformed settings
+    require schema version 1, a valid default-profile identifier, positive
+        numeric limits, limits that cannot overflow their runtime units, and a
+        request timeout no longer than one day
+    require every configured path to be a relative child path
+    return validated settings including the base directory
+
+FUNCTION explain settings
+    return every required setting with its effective value and user-facing
+        instructions for changing it

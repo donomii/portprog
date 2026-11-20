@@ -1,0 +1,12 @@
+MODULE selftest
+
+FUNCTION run built-in test
+    create an isolated temporary directory
+    strictly parse a complete documented configuration
+    validate a representative package manifest
+    prove parent traversal is rejected
+    construct a small in-memory ZIP, save it temporarily, extract it safely,
+        and require its declared executable
+    report each passing area and use no network or project state
+    remove only the exact known temporary file and directories created by the
+        test, reporting any cleanup failure

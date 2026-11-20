@@ -1,0 +1,16 @@
+MODULE json_strict
+
+FUNCTION create strict JSON decoder from bytes and source name
+    reject metadata over 4 MiB and JSON nested beyond 256 levels
+    parse the complete JSON grammar while tracking keys in every object
+    reject duplicate keys in any object
+    configure the typed decoder to reject unknown fields
+    return the decoder
+
+FUNCTION require JSON end
+    after decoding one typed value, require end-of-input
+    reject a second value or malformed trailing content
+
+The duplicate-key parser handles objects, arrays, strings, literals, and
+numbers, reports byte positions, validates string escapes and number syntax,
+and requires the complete input to be consumed.

@@ -1,0 +1,25 @@
+MODULE catalog
+
+FUNCTION load catalog directory
+    read JSON files in stable filename order
+    strictly decode and validate every package manifest
+    require each filename to match its package name
+    reject duplicates and an empty catalog
+    return packages indexed by name
+
+FUNCTION load named profile
+    validate the requested identifier
+    strictly decode its matching profile file
+    require profile name and filename to match
+
+FUNCTION validate package or profile
+    enforce every schema, identifier, description, license, URL, checksum,
+        platform, format, size, path, executable, and uniqueness rule in SPEC.md
+
+FUNCTION resolve lock for profile and platform
+    validate the profile and host platform
+    visit each requested package depth-first
+    reject missing dependencies and cycles
+    place dependencies before dependents
+    require exactly one asset per selected package for the platform
+    return an immutable lock with UTC generation time and ordered packages

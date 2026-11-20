@@ -1,0 +1,24 @@
+MODULE archive
+
+FUNCTION extract asset into empty staging directory
+    require a positive total expansion limit
+    select raw, ZIP, tar.gz, tar.bz2, or tar.xz extraction
+    reject unsupported formats
+    after extraction, require every declared executable as a regular file
+
+FUNCTION extract archive entries
+    clean forward-slash paths and remove the declared leading components
+    skip entries removed completely by stripping
+    reject absolute paths, backslashes, parent traversal, duplicate output
+        paths, symbolic links, hard links, devices, and other special entries
+    reject more than 100,000 archive entries
+    create only contained directories and new regular files
+    sanitize permissions to user-readable files and executable bits when set
+    count all written bytes and stop when the configured limit is exceeded
+    synchronize and close each output file
+    require every declared binary directory, then make each declared executable
+        mode 0755 and require it to be a regular file
+
+FUNCTION extract raw asset
+    copy the verified archive object to its declared contained path as an
+        executable regular file under the same expansion limit
